@@ -1,13 +1,24 @@
 #include "ManualTimer.h"
 
-#include <format>
-
 #include <QApplication>
 #include <QWidget>
 #include <QPushButton>
 #include <QObject>
 
 std::list<ManualTimer> AllManualTimers;
+
+namespace
+{
+    //TODO: switch back to std::format after clang/etc support it in LTS releases
+    std::string FormatDigits(int64_t number, int zeroPadToLength)
+    {
+        std::string formatted = std::to_string(number);
+        while (formatted.size() < zeroPadToLength)
+            formatted = "0" + formatted;
+
+        return formatted;
+    }
+}
 
 ManualTimer::ManualTimer()
 {
@@ -91,7 +102,7 @@ void ManualTimer::timerUpdate()
     int minutesDigit = (totalMsSinceStart / 1000 / 60) % 60;
     int hoursDigit = (totalMsSinceStart / 1000 / 60 / 60) % 60;
 
-    std::string displayString = std::format("{}:{:0>2}:{:0>2}.{}", hoursDigit, minutesDigit, secondsDigit, msDigit / 100);
+    std::string displayString = FormatDigits(hoursDigit, 1) + ":" + FormatDigits(minutesDigit, 2) + ":" + FormatDigits(secondsDigit, 2) + "." + FormatDigits(msDigit / 100, 1);
     numberDisplay->setDigitCount((int)displayString.size());
     numberDisplay->display(QString::fromStdString(displayString));
 }
