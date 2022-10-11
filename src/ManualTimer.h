@@ -6,11 +6,14 @@
 #include <QMenu>
 #include <QTimer>
 #include <QPushButton>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 
 class ManualTimer: public DraggableQWidget
 {
 public:
     ManualTimer();
+    ~ManualTimer();
 
     void mousePressEvent(QMouseEvent *event) override;
 
@@ -24,6 +27,9 @@ private slots:
 
     std::unique_ptr<QPushButton> buttonStart;
     std::unique_ptr<QPushButton> buttonStop;
+
+    std::unique_ptr<QVBoxLayout> controlsLayout;
+    std::unique_ptr<QHBoxLayout> mainLayout;
 
     QTimer timer;
     std::chrono::steady_clock::time_point timerStart;
