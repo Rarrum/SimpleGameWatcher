@@ -1,6 +1,10 @@
 add_rules("mode.debug", "mode.release")
 
-target("test")
+if is_mode("debug") then
+    set_symbols("debug")
+end
+
+target("EasyAutoTracker")
     set_languages("cxx20")
 --    add_rules("qt.application")
     add_rules("qt.console")

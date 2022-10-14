@@ -6,7 +6,7 @@
 #include "../GameWatcher.h"
 #include "../MemoryWatchers/SnesMemory.h"
 
-class Lufia2AncientCaveGameWatcher: public GameWatcher
+class Lufia2GameWatcher: public GameWatcher
 {
 public:
     bool IsReady() override;

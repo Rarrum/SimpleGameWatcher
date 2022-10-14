@@ -1,11 +1,11 @@
-#include "Lufia2AncientCaveGameWatcher.h"
+#include "Lufia2-GameWatcher.h"
 
-bool Lufia2AncientCaveGameWatcher::IsReady()
+bool Lufia2GameWatcher::IsReady()
 {
     return snes.HasLocatedRam();
 }
 
-void Lufia2AncientCaveGameWatcher::PollGameState()
+void Lufia2GameWatcher::PollGameState()
 {
     if (!snes.HasLocatedRam())
     {
