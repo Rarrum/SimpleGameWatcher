@@ -8,13 +8,15 @@
 class ClosableQWidget: public QWidget
 {
 public:
-    std::function<void()> closeCallback;
+    inline ClosableQWidget(QWidget *parent = nullptr): QWidget(parent) {}
+
+    std::function<void(ClosableQWidget&)> closeCallback;
 
 protected:
     inline void closeEvent(QCloseEvent *event) override
     {
         if (closeCallback)
-            closeCallback();
+            closeCallback(*this);
 
         QWidget::closeEvent(event);
     }

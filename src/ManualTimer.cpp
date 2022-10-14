@@ -5,8 +5,6 @@
 #include <QPushButton>
 #include <QObject>
 
-std::list<ManualTimer> AllManualTimers;
-
 namespace
 {
     //TODO: switch back to std::format after clang/etc support it in LTS releases
@@ -20,7 +18,7 @@ namespace
     }
 }
 
-ManualTimer::ManualTimer()
+ManualTimer::ManualTimer(QWidget *parent): DraggableQWidget(parent)
 {
     resize(225, 50);
     setWindowTitle("Manual Timer");
@@ -28,32 +26,28 @@ ManualTimer::ManualTimer()
 
     resizeBorder = 4;
 
-    closeCallback = [&]()
-    {
-        AllManualTimers.remove_if([&](const auto &item) { return this == &item; });
-    };
-
-    actionExit = std::make_unique<QAction>("Close Timer", this);
-    QObject::connect(actionExit.get(), &QAction::triggered, [&]()
+    actionExit = new QAction("Close Timer", this);
+    QObject::connect(actionExit, &QAction::triggered, [&]()
     {
         close();
     });
 
-    contextMenu = std::make_unique<QMenu>(this);
-    contextMenu->addAction(actionExit.get());
+    contextMenu = new QMenu(this);
+    contextMenu->addAction(actionExit);
 
-    numberDisplay = std::make_unique<QLCDNumber>();
+    numberDisplay = new QLCDNumber(this);
     numberDisplay->setMouseTracking(true); // for the resize cursor change to work correctly
 
     timerStart = timerEnd = std::chrono::steady_clock::now();
-    QObject::connect(&timer, &QTimer::timeout, [this]() { timerUpdate(); });
-    timer.start(1000 / 60);
+    timer = new QTimer(this);
+    QObject::connect(timer, &QTimer::timeout, [this]() { timerUpdate(); });
+    timer->start(1000 / 60);
 
-    buttonStart = std::make_unique<QPushButton>();
+    buttonStart = new QPushButton(this);
     buttonStart->setText(">");
     buttonStart->setMinimumSize(20, 20);
     buttonStart->setMaximumSize(50, 50);
-    QObject::connect(buttonStart.get(), &QPushButton::clicked, [&]()
+    QObject::connect(buttonStart, &QPushButton::clicked, [&]()
     {
         if (!timerStarted)
             timerStart = timerEnd = std::chrono::steady_clock::now();
@@ -65,12 +59,12 @@ ManualTimer::ManualTimer()
         buttonStart->setEnabled(false);
     });
 
-    buttonStop = std::make_unique<QPushButton>();
+    buttonStop = new QPushButton(this);
     buttonStop->setText("||");
     buttonStop->setEnabled(false);
     buttonStop->setMinimumSize(20, 20);
     buttonStop->setMaximumSize(50, 50);
-    QObject::connect(buttonStop.get(), &QPushButton::clicked, [&]()
+    QObject::connect(buttonStop, &QPushButton::clicked, [&]()
     {
         if (timerPaused)
         {
@@ -88,24 +82,19 @@ ManualTimer::ManualTimer()
         buttonStart->setEnabled(true);
     });
 
-    controlsLayout = std::make_unique<QVBoxLayout>();
+    controlsLayout = new QVBoxLayout();
     controlsLayout->setContentsMargins(0, 0, 2, 2);
     controlsLayout->setSpacing(1);
-    controlsLayout->addWidget(buttonStart.get());
-    controlsLayout->addWidget(buttonStop.get());
+    controlsLayout->addWidget(buttonStart);
+    controlsLayout->addWidget(buttonStop);
 
-    mainLayout = std::make_unique<QHBoxLayout>();
-    mainLayout->addWidget(numberDisplay.get(), 95);
-    mainLayout->addLayout(controlsLayout.get(), 5);
+    mainLayout = new QHBoxLayout();
+    mainLayout->addWidget(numberDisplay, 95);
+    mainLayout->addLayout(controlsLayout, 5);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
-    setLayout(mainLayout.get());
+    setLayout(mainLayout);
     show();
-}
-
-ManualTimer::~ManualTimer()
-{
-    controlsLayout.reset(); //workaround Qt internally deleting something in the wrong order and crashing itself
 }
 
 void ManualTimer::mousePressEvent(QMouseEvent *event)

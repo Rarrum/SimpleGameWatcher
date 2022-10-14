@@ -5,7 +5,7 @@
 class DraggableQWidget: public ClosableQWidget
 {
 public:
-    inline DraggableQWidget()
+    inline DraggableQWidget(QWidget *parent = nullptr): ClosableQWidget(parent)
     {
         setMouseTracking(true);
     }
