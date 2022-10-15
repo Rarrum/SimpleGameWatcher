@@ -1,12 +1,14 @@
+#ifndef _WIN32
+
 #include "PCProcessMemory.h"
 
 struct PCProcessMemoryData
 {
 };
 
-PCProcessMemory::PCProcessMemory()
+PCProcessMemory::PCProcessMemory(std::unique_ptr<PCProcessMemoryData> &&from)
 {
-    data = std::make_unique<PCProcessMemoryData>();
+    data = std::move(from);
 }
 
 std::unique_ptr<PCProcessMemory> PCProcessMemory::FindProcess(std::function<bool(const std::string &processNameLower)> matchProcessName, std::function<bool(const PCProcessMemory &process)> matchProcessMemory)
@@ -35,3 +37,5 @@ std::vector<uint8_t> PCProcessMemory::ReadMemory(uint64_t address, uint32_t amou
     //TODO
     return std::vector<uint8_t>();
 }
+
+#endif

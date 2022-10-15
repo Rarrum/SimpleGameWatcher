@@ -1,4 +1,4 @@
-#include "SimpleTimer.h"
+#include "SimpleTimerWindow.h"
 
 #include <QApplication>
 #include <QWidget>
@@ -18,10 +18,10 @@ namespace
     }
 }
 
-SimpleTimer::SimpleTimer(bool showControls, QWidget *parent): DraggableQWidget(parent)
+SimpleTimerWindow::SimpleTimerWindow(bool showControls, QWidget *parent): DraggableQWidget(parent)
 {
     resize(225, 50);
-    setWindowTitle("Manual Timer");
+    setWindowTitle("Timer");
     setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint | Qt::FramelessWindowHint);
 
     resizeBorder = 4;
@@ -100,7 +100,7 @@ SimpleTimer::SimpleTimer(bool showControls, QWidget *parent): DraggableQWidget(p
     timer->start(1000 / 60);
 }
 
-void SimpleTimer::mousePressEvent(QMouseEvent *event)
+void SimpleTimerWindow::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::RightButton)
     {
@@ -110,7 +110,7 @@ void SimpleTimer::mousePressEvent(QMouseEvent *event)
         DraggableQWidget::mousePressEvent(event);
 }
 
-void SimpleTimer::timerUpdate()
+void SimpleTimerWindow::timerUpdate()
 {
     if (timerStarted && !timerPaused)
         timerEnd = std::chrono::steady_clock::now();
@@ -126,7 +126,7 @@ void SimpleTimer::timerUpdate()
     numberDisplay->display(QString::fromStdString(displayString));
 }
 
-void SimpleTimer::StartTimer()
+void SimpleTimerWindow::StartTimer()
 {
     if (!timerStarted)
         timerStart = timerEnd = std::chrono::steady_clock::now();
@@ -135,12 +135,12 @@ void SimpleTimer::StartTimer()
     timerPaused = false;
 }
 
-void SimpleTimer::StopTimer()
+void SimpleTimerWindow::StopTimer()
 {
     timerPaused = true;
 }
 
-void SimpleTimer::ResetTimer()
+void SimpleTimerWindow::ResetTimer()
 {
     timerStarted = false;
     timerStart = timerEnd = std::chrono::steady_clock::now();

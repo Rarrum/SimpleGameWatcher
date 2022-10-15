@@ -4,29 +4,19 @@
 
 struct Lufia2GameSetupState
 {
-    std::weak_ptr<Lufia2GameWatcher> sharedWatcher;
 };
 
 Lufia2GameSetup::Lufia2GameSetup()
 {
     state = std::make_unique<Lufia2GameSetupState>();
 
-    auto getSharedWatcher = [this]()
+    allModes.emplace_back("Ancient Cave - Simple Timer", [this](QWidget *parent)
     {
-        std::shared_ptr<Lufia2GameWatcher> watcher = state->sharedWatcher.lock();
-        if (!watcher)
-        {
-            watcher = std::make_shared<Lufia2GameWatcher>();
-            state->sharedWatcher = watcher;
-        }
-
-        return watcher;
-    };
-
-    allModes.emplace_back("Ancient Cave - Simple Timer", [=](QWidget *parent)
-    {
-        std::shared_ptr<Lufia2GameWatcher> watcher = getSharedWatcher();
-        //TODO: create timer window and hook it up to watcher!
+        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(GetOrCreateWatcherAndStartPolling());
+        CreateSimpleTimer(parent,
+            [=]() { return watcher->GetIntegerValue("floor") == 1; },
+            [=]() { return watcher->GetIntegerValue("floor") == 3; },
+            [=]() { return watcher->GetIntegerValue("floor") == 0; });
     });
 }
 
@@ -42,4 +32,9 @@ std::string Lufia2GameSetup::Name() const
 std::vector<GameSetupMode>& Lufia2GameSetup::Entries()
 {
     return allModes;
+}
+
+std::shared_ptr<GameWatcher> Lufia2GameSetup::CreateGameSpecificWatcher()
+{
+    return std::make_shared<Lufia2GameWatcher>();
 }

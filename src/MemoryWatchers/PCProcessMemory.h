@@ -23,7 +23,7 @@ public:
     std::vector<uint8_t> ReadMemory(uint64_t address, uint32_t amount) const;
 
 private:
-    PCProcessMemory();
+    PCProcessMemory(std::unique_ptr<PCProcessMemoryData> &&from);
 
     std::unique_ptr<PCProcessMemoryData> data;
 };

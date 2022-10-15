@@ -17,10 +17,9 @@ public:
     virtual bool GetFlagValue(const std::string &name);
 
     virtual bool IsReady() = 0;
-
-protected:
     virtual void PollGameState() = 0;
 
+protected:
     void SetIntegerState(const std::string &name, int64_t value);
     void SetStringState(const std::string &name, const std::string &value);
     void SetFlagState(const std::string &name, bool value);

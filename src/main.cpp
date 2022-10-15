@@ -13,7 +13,7 @@
 #include <QCompleter>
 
 #include "ClosableQWidget.h"
-#include "SimpleTimer.h"
+#include "SimpleTimerWindow.h"
 
 #include "GameList.h"
 
@@ -27,8 +27,8 @@ int main(int argc, char **argv)
     ClosableQWidget *windowPointer = &window;
     window.resize(500, 400);
 
-    QGroupBox *manualBox = new QGroupBox("Manual Controlled");
-    QGroupBox *autoBox = new QGroupBox("Auto Controlled");
+    QGroupBox *manualBox = new QGroupBox("Create Manual Controlled");
+    QGroupBox *autoBox = new QGroupBox("Create Auto Controlled");
     QHBoxLayout *topLayout = new QHBoxLayout();
     topLayout->addWidget(manualBox);
     topLayout->addWidget(autoBox);
@@ -40,10 +40,10 @@ int main(int argc, char **argv)
 
     // manual section
     QPushButton *createManualTimerButton = new QPushButton(&window);
-    createManualTimerButton->setText("Create Simple Timer");
+    createManualTimerButton->setText("Simple Timer");
     QObject::connect(createManualTimerButton, &QPushButton::clicked, [&]()
     {
-        SimpleTimer *newTimer = new SimpleTimer(true, &window);
+        SimpleTimerWindow *newTimer = new SimpleTimerWindow(true, &window);
     });
     manualLayout->addWidget(createManualTimerButton);
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
         for (GameSetupMode &gameMode : gameSetup->Entries())
         {
             QPushButton *gameActionButton = new QPushButton();
-            gameActionButton->setText(QString::fromStdString("Create " + gameMode.Name));
+            gameActionButton->setText(QString::fromStdString(gameMode.Name));
             GameSetupMode *gameModePointer = &gameMode;
             QObject::connect(gameActionButton, &QPushButton::clicked, [=]()
             {
@@ -92,6 +92,17 @@ int main(int argc, char **argv)
             autoLayout->addWidget(gameActionButton);
             gameActionButtons.emplace_back(gameActionButton);
         }
+
+        //every game gets a debug mode too
+        QPushButton *gameDebugButton = new QPushButton();
+        gameDebugButton->setText("Debug");
+        GameSetup *gameSetupPointer = gameSetup.get();
+        QObject::connect(gameDebugButton, &QPushButton::clicked, [=]()
+        {
+            gameSetupPointer->CreateDebugWindow(windowPointer);
+        });
+        autoLayout->addWidget(gameDebugButton);
+        gameActionButtons.emplace_back(gameDebugButton);
     };
 
     QObject::connect(comboGameSelect, QOverload<int>::of(&QComboBox::currentIndexChanged), currentGameIndedChangedAction);

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <chrono>
 
 #include "DraggableQWidget.h"
@@ -9,10 +11,10 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-class SimpleTimer: public DraggableQWidget
+class SimpleTimerWindow: public DraggableQWidget
 {
 public:
-    SimpleTimer(bool showControls, QWidget *parent = nullptr);
+    SimpleTimerWindow(bool showControls, QWidget *parent);
 
     void mousePressEvent(QMouseEvent *event) override;
 
