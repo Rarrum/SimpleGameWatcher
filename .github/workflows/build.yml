@@ -1,0 +1,17 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build on ${{matrix.os}}
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - name: setup xmake
+      uses: xmake-io/github-action-setup-xmake@v1.0.13
+    - name: build
+      run:
+        xmake -w
