@@ -1,17 +1,20 @@
 #include "MemoryPatternMatchUtils.h"
 
-uint64_t MatchAnyPattern(const std::vector<MemorySearchPattern> &patterns, uint8_t *memoryStart, uint8_t *memoryEnd, uint64_t startAddress)
+std::vector<uint64_t> FindAnyPatternOffsets(const std::vector<MemorySearchPattern> &patterns, uint8_t *memoryStart, uint8_t *memoryEnd)
 {
+    std::vector<uint64_t> allFoundOffsets;
+
     uint64_t searchSize = memoryEnd - memoryStart;
     for (uint64_t currentOffset = 0; currentOffset < searchSize; ++currentOffset)
     {
         for (const MemorySearchPattern &pattern : patterns)
         {
-            uint8_t *actualRam = memoryStart + currentOffset;
-            uint8_t *patternRam = memoryStart + currentOffset + pattern.RamOffset;
-            uint8_t *patternRamEnd = patternRam + pattern.Pattern.size();
+            const uint8_t *actualRam = memoryStart + currentOffset + pattern.RamOffset;
+            const uint8_t *actualRamEnd = actualRam + pattern.Pattern.size();
+            const uint8_t *patternRam = pattern.Pattern.data();
+            const uint8_t *patternRamEnd = pattern.Pattern.data() + pattern.Pattern.size();
 
-            if (patternRamEnd > memoryEnd)
+            if (actualRamEnd > memoryEnd)
                 continue;
 
             bool allMatches = true;
@@ -23,7 +26,9 @@ uint64_t MatchAnyPattern(const std::vector<MemorySearchPattern> &patterns, uint8
             }
 
            if (allMatches)
-                return startAddress + currentOffset;
+                allFoundOffsets.emplace_back(currentOffset);
         }
     }
+
+    return allFoundOffsets;
 }

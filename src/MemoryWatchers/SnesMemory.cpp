@@ -23,7 +23,7 @@ SnesMemory::~SnesMemory()
 {
 }
 
-bool SnesMemory::TryLocateRam(std::function<uint64_t(uint8_t *start, uint8_t *end, uint64_t startAddress)> ramLocator)
+bool SnesMemory::TryLocateRam(std::function<uint64_t(uint8_t *start, uint8_t *end)> ramLocator)
 {
     if (!data->snesProcess || !data->snesProcess->IsStillAlive())
     {
@@ -36,8 +36,14 @@ bool SnesMemory::TryLocateRam(std::function<uint64_t(uint8_t *start, uint8_t *en
         {
             process.ScanMemory(SnesRamSize, [&](uint8_t *start, uint8_t *end, uint64_t startAddress)
             {
-                data->snesRamAddress = ramLocator(start, end, startAddress);
-                return data->snesRamAddress != 0;
+                uint64_t locatedOffset = ramLocator(start, end);
+                if (locatedOffset == std::numeric_limits<uint64_t>::max())
+                    return true;
+                else
+                {
+                    data->snesRamAddress = startAddress + locatedOffset;
+                    return false;
+                }
             });
 
             return data->snesRamAddress != 0;
@@ -47,26 +53,34 @@ bool SnesMemory::TryLocateRam(std::function<uint64_t(uint8_t *start, uint8_t *en
     {
         data->snesProcess->ScanMemory(SnesRamSize, [&](uint8_t *start, uint8_t *end, uint64_t startAddress)
         {
-            data->snesRamAddress = ramLocator(start, end, startAddress);
-            return data->snesRamAddress != 0;
+            uint64_t locatedOffset = ramLocator(start, end);
+            if (locatedOffset == std::numeric_limits<uint64_t>::max())
+                return true;
+            else
+            {
+                data->snesRamAddress = startAddress + locatedOffset;
+                return false;
+            }
         });
     }
 
     return HasLocatedRam();
 }
 
-bool SnesMemory::TryLocateRom(std::function<uint64_t(uint8_t *start, uint8_t *end, uint64_t startAddress)> ramLocator)
+bool SnesMemory::TryLocateRom(std::function<uint64_t(uint8_t *start, uint8_t *end)> ramLocator)
 {
+    //TODO
     return false;
 }
 
 bool SnesMemory::HasLocatedRam() const
 {
-    return data->snesProcess && data->snesRamAddress != 0;
+    return data->snesProcess && data->snesProcess->IsStillAlive() && data->snesRamAddress != 0;
 }
 
 bool SnesMemory::HasLocatedRom() const
 {
+    //TODO
     return false;
 }
 
@@ -81,5 +95,6 @@ const MemorySnapshot SnesMemory::ReadRam() const
 
 const MemorySnapshot SnesMemory::ReadRom() const
 {
+    //TODO
     return MemorySnapshot();
 }

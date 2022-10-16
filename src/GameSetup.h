@@ -49,7 +49,7 @@ protected:
         return watcher;
     }
 
-    void CreateSimpleTimer(QWidget *parent, std::function<bool()> shouldStart, std::function<bool()> shouldStop, std::function<bool()> shouldReset);
+    SimpleTimerWindow* CreateSimpleTimer(QWidget *parent);
 
     virtual std::shared_ptr<GameWatcher> onWatcherTimerUpdate();
 
@@ -58,13 +58,5 @@ private:
     std::weak_ptr<GameWatcher> watcherToPoll;
 
     std::list<DebugGameStateWindow*> allDebugWindows;
-
-    struct SimpleTimerState
-    {
-        SimpleTimerWindow *timer = nullptr;
-        std::function<bool()> shouldStart;
-        std::function<bool()> shouldStop;
-        std::function<bool()> shouldReset;
-    };
-    std::list<SimpleTimerState> allSimpleTimers;
+    std::list<SimpleTimerWindow*> allSimpleTimers;
 };

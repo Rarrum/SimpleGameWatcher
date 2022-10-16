@@ -22,7 +22,7 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls, QWidget *parent): Dragga
 {
     resize(225, 50);
     setWindowTitle("Timer");
-    setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint | Qt::FramelessWindowHint);
+    setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 
     resizeBorder = 4;
 
@@ -143,5 +143,18 @@ void SimpleTimerWindow::StopTimer()
 void SimpleTimerWindow::ResetTimer()
 {
     timerStarted = false;
+    timerPaused = true;
     timerStart = timerEnd = std::chrono::steady_clock::now();
+}
+
+void SimpleTimerWindow::RefreshStateFromWatcher()
+{
+    if (shouldStartCallback && shouldStartCallback())
+        StartTimer();
+
+    if (shouldStopCallback && shouldStopCallback())
+        StopTimer();
+
+    if (shouldResetCallback && shouldResetCallback())
+        ResetTimer();
 }

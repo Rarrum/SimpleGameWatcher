@@ -54,7 +54,7 @@ namespace
     std::unique_ptr<PCProcessMemoryData> CreateForPid(DWORD pid)
     {
         std::unique_ptr<PCProcessMemoryData> process = std::make_unique<PCProcessMemoryData>();
-        process->hProcess = OpenProcess(PROCESS_VM_READ, FALSE, pid);
+        process->hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
         if (!process->hProcess)
             return {};
 
@@ -116,6 +116,9 @@ bool PCProcessMemory::IsStillAlive() const
 
 void PCProcessMemory::ScanMemory(int32_t halfChunkSize, std::function<bool(uint8_t *start, uint8_t *end, uint64_t startAddress)> scanChunk) const
 {
+    if (!IsStillAlive())
+        return;
+
     std::vector<uint8_t> pageMemory;
 
     for (uint64_t scanAddress = 0;;)
@@ -128,13 +131,20 @@ void PCProcessMemory::ScanMemory(int32_t halfChunkSize, std::function<bool(uint8
         if (mbi.State == MEM_COMMIT && (mbi.Protect & PAGE_GUARD) != PAGE_GUARD)
         {
             pageMemory.resize(mbi.RegionSize);
-            if (!ReadProcessMemory(data->hProcess, (void*)mbi.BaseAddress, pageMemory.data(), mbi.RegionSize, nullptr))
+
+            SIZE_T readBytes = 0;
+            if (!ReadProcessMemory(data->hProcess, (void*)mbi.BaseAddress, pageMemory.data(), mbi.RegionSize, &readBytes))
+            {
+                scanAddress = (uint64_t)mbi.BaseAddress + mbi.RegionSize;
                 continue;
+            }
 
             bool shouldContinue = scanChunk(pageMemory.data(), pageMemory.data() + pageMemory.size(), (uint64_t)mbi.BaseAddress);
             if (!shouldContinue)
                 break;
         }
+
+        scanAddress = (uint64_t)mbi.BaseAddress + mbi.RegionSize;
     }
 }
 

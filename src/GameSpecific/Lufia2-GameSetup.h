@@ -6,8 +6,6 @@
 
 #include "../GameSetup.h"
 
-struct Lufia2GameSetupState;
-
 class Lufia2GameSetup: public GameSetup
 {
 public:
@@ -21,5 +19,4 @@ protected:
 
 private:
     std::vector<GameSetupMode> allModes;
-    std::unique_ptr<Lufia2GameSetupState> state;
 };

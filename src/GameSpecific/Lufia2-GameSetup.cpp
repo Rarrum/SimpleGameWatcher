@@ -2,21 +2,16 @@
 
 #include "Lufia2-GameWatcher.h"
 
-struct Lufia2GameSetupState
-{
-};
-
 Lufia2GameSetup::Lufia2GameSetup()
 {
-    state = std::make_unique<Lufia2GameSetupState>();
-
     allModes.emplace_back("Ancient Cave - Simple Timer", [this](QWidget *parent)
     {
         std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(GetOrCreateWatcherAndStartPolling());
-        CreateSimpleTimer(parent,
-            [=]() { return watcher->GetIntegerValue("floor") == 1; },
-            [=]() { return watcher->GetIntegerValue("floor") == 3; },
-            [=]() { return watcher->GetIntegerValue("floor") == 0; });
+        SimpleTimerWindow *timer = CreateSimpleTimer(parent);
+        timer->SetWatcher(watcher);
+        timer->SetStartCheck([=]() { return (watcher->GetFlagValue("OnNameSelect") && watcher->GetFlagValue("ScreenFading")) || watcher->GetFlagValue("InGruberik") || watcher->GetIntegerValue("Floor") != 0; });
+        timer->SetStopCheck([=]() { return watcher->GetIntegerValue("Floor") == 99 && watcher->GetIntegerValue("BlobHP") == 0 && watcher->GetFlagValue("BlobDeathAnimation"); });
+        timer->SetResetCheck([=]() { return watcher->GetFlagValue("OnTitleMenu") || (watcher->GetFlagValue("OnNameSelect") && !watcher->GetFlagValue("ScreenFading")); });
     });
 }
 
