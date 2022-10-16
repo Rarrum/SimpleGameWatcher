@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: setup xmake
       uses: xmake-io/github-action-setup-xmake@v1.0.13
+    - name: Check out repository
+      uses: actions/checkout@v3
     - name: build
       run:
         xmake -w
