@@ -1,5 +1,7 @@
 #include "SnesMemory.h"
 
+#include <limits>
+
 #include "PCProcessMemory.h"
 
 namespace
@@ -31,10 +33,10 @@ bool SnesMemory::TryLocateRam(std::function<uint64_t(uint8_t *start, uint8_t *en
 
         data->snesProcess = PCProcessMemory::FindProcess([](const std::string &processNameLower)
         {
-            return processNameLower.find("snes") != std::string::npos;
+            return processNameLower.find("snes") != std::string::npos || processNameLower.find("higan") != std::string::npos;
         }, [&](const PCProcessMemory &process)
         {
-            process.ScanMemory(SnesRamSize, [&](uint8_t *start, uint8_t *end, uint64_t startAddress)
+            process.ScanMemory([&](uint8_t *start, uint8_t *end, uint64_t startAddress)
             {
                 uint64_t locatedOffset = ramLocator(start, end);
                 if (locatedOffset == std::numeric_limits<uint64_t>::max())
@@ -51,7 +53,7 @@ bool SnesMemory::TryLocateRam(std::function<uint64_t(uint8_t *start, uint8_t *en
     }
     else
     {
-        data->snesProcess->ScanMemory(SnesRamSize, [&](uint8_t *start, uint8_t *end, uint64_t startAddress)
+        data->snesProcess->ScanMemory([&](uint8_t *start, uint8_t *end, uint64_t startAddress)
         {
             uint64_t locatedOffset = ramLocator(start, end);
             if (locatedOffset == std::numeric_limits<uint64_t>::max())

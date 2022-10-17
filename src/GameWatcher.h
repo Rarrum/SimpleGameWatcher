@@ -8,6 +8,8 @@
 class GameWatcher
 {
 public:
+    virtual ~GameWatcher() = default;
+
     virtual const std::vector<std::string> AllWatchableIntegers();
     virtual const std::vector<std::string> AllWatchableStrings();
     virtual const std::vector<std::string> AllWatchableFlags();

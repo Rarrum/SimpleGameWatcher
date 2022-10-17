@@ -43,7 +43,7 @@ int main(int argc, char **argv)
     createManualTimerButton->setText("Simple Timer");
     QObject::connect(createManualTimerButton, &QPushButton::clicked, [&]()
     {
-        SimpleTimerWindow *newTimer = new SimpleTimerWindow(true, &window);
+        new SimpleTimerWindow(true, &window);
     });
     manualLayout->addWidget(createManualTimerButton);
 
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
         }
         gameActionButtons.clear();
 
-        if (index < 0 || index >= allGames.size())
+        if (index < 0 || index >= (int)allGames.size())
             return;
 
         auto &gameSetup = allGames[index];

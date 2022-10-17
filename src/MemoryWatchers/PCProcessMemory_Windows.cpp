@@ -114,7 +114,7 @@ bool PCProcessMemory::IsStillAlive() const
     return false;
 }
 
-void PCProcessMemory::ScanMemory(int32_t halfChunkSize, std::function<bool(uint8_t *start, uint8_t *end, uint64_t startAddress)> scanChunk) const
+void PCProcessMemory::ScanMemory(std::function<bool(uint8_t *start, uint8_t *end, uint64_t startAddress)> scanChunk) const
 {
     if (!IsStillAlive())
         return;

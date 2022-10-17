@@ -15,6 +15,13 @@
 
 struct GameSetupMode
 {
+    GameSetupMode() = default;
+    inline GameSetupMode(const std::string &name, std::function<void(QWidget *parent)> creator)
+    {
+        Name = name;
+        Creator = creator;
+    }
+
     std::string Name;
     std::function<void(QWidget *parent)> Creator;
 };
@@ -22,6 +29,8 @@ struct GameSetupMode
 class GameSetup
 {
 public:
+    virtual ~GameSetup() = default;
+
     virtual std::string Name() const = 0;
     virtual std::vector<GameSetupMode>& Entries() = 0;
 

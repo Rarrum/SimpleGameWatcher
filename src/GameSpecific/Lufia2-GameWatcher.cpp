@@ -21,7 +21,8 @@ void Lufia2GameWatcher::PollGameState()
 
             std::vector<uint64_t> ramOffsets = FindAnyPatternOffsets(ramPatterns, start, end);
 
-            //TODO: warn if we find multiple - loading/restoring saved states tend to mess with this, resetting emulator fixes
+            //TODO: warn if we find multiple - loading/restoring saved states tend to mess with this, resetting emulator fixes on some emulators
+            //TODO: maybe add UI for picking the right one so the user can select from options to try until they find the right one, if we can't find something more solid to do here?
 
             if (ramOffsets.empty())
                 return std::numeric_limits<uint64_t>::max();
