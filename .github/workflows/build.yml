@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [windows-2022]
 #TODO: Figure out how to get a newer clang version installed, then re-add linux:    os: [ubuntu-latest, windows-latest]
 
     steps:
@@ -16,9 +16,13 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
       with:
-        version: '5.12.11'
+        version: '5.15.2'
     - name: Check out repository
       uses: actions/checkout@v3
     - name: build
       run:
         xmake -w
+    - name: Add Qt DLL stuff
+      if: startsWith(matrix.os, 'windows')
+      run: $QTDIR/bin/windeployqt.exe build\windows\x64\release\EasyAutoTracker.exe --release --no-compiler-runtime
+
