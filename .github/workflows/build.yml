@@ -44,7 +44,7 @@ jobs:
       uses: vimtor/action-zip@v1
       with:
         files: buildMerged\\bin
-        recursive: false
+        recursive: true
         dest: buildZipped\\EasyAutoTracker-Windows.zip
    
     - name: Create draft Release
