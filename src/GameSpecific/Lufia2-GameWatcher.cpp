@@ -67,7 +67,7 @@ void Lufia2GameWatcher::PollGameState()
     bool inGruberix = locationIdA == 55 && locationIdB == 55 && locationIdC == 125;
     SetFlagState("InGruberik", inGruberix);
 
-    SetFlagState("OnNameSelect", ram.ReadInteger<uint8_t>(0x0009) == 49 && ram.ReadInteger<uint8_t>(0x000A) == 126 && !inGruberix && !onTitleMenu);
+    SetFlagState("OnNameSelect", ram.ReadInteger<uint8_t>(0x0009) == 49 && ram.ReadInteger<uint8_t>(0x000A) == 126 && ram.ReadInteger<uint32_t>(0x0011) == 0 && !inGruberix && !onTitleMenu);
     SetFlagState("ScreenFading", !(ram.ReadInteger<uint8_t>(0x0583) == 15 || (ram.ReadInteger<uint8_t>(0x0583) == 128 && ram.ReadInteger<uint8_t>(0x0581) != 0)));
 
     uint16_t blobHpAfterCurrentAttack = ram.ReadInteger<uint16_t>(0x162C);
