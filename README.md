@@ -15,3 +15,4 @@ TODO (The initial build only supports Lufia 2's Ancient Cave, run in various sne
 - On windows, minimizing the main control window also minimizes all other windows.
 - Need to revisit Qt's UI element allocation patterns - they currently seem to be leaking when opening and closing windows.
 - A GitHub release for linux isn't working yet (need to figure out how to get GitHub to use a newer compiler), so you'll need to build that yourself.
+- High CPU usage and possible UI lag if an emulator is running and we're actively searching for a game that's not running in the emulator.
