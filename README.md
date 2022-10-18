@@ -14,3 +14,4 @@ TODO (The initial build only supports Lufia 2's Ancient Cave, run in various sne
 - On linux, scanning doesn't work until the user runs "sudo setcap cap_sys_ptrace=eip EasyAutoTracker" on the executable - need to automate setting this somehow.
 - On windows, minimizing the main control window also minimizes all other windows.
 - Need to revisit Qt's UI element allocation patterns - they currently seem to be leaking when opening and closing windows.
+- A GitHub release for linux isn't working yet (need to figure out how to get GitHub to use a newer compiler), so you'll need to build that yourself.
