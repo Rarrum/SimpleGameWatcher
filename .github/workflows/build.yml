@@ -43,7 +43,7 @@ jobs:
     - name: Zip Windows Release   
       uses: vimtor/action-zip@v1
       with:
-        files: buildMerged\\bin manifest.json
+        files: buildMerged\\bin
         recursive: false
         dest: buildZipped\\EasyAutoTracker-Windows.zip
    
@@ -52,7 +52,7 @@ jobs:
       with:
         draft: true
         prerelease: true
-        release_name: v0.1.0
+        name: v0.0.0 NEW DRAFT RELEASE
         generate_release_notes: true
-        files: buildZipped
+        files: buildZipped\\EasyAutoTracker-Windows.zip
       
