@@ -10,7 +10,9 @@ Simply run it, select the game on the right, and click the buttons below it to b
 TODO (The initial build only supports Lufia 2's Ancient Cave, run in various snes emulators)
 
 # Known issues
-- Need to improve memory scanning logic - currently we run into false positives in some cases (such as if an emulator has saved/loaded save states).  If you run into this, try restarting the emulator.
+- Need to improve memory scanning logic:
+- * Currently we run into false positives in some cases (such as if an emulator has saved/loaded save states).  If you run into this, try restarting the emulator.
+- * Sometimes we just can't find snes ram and the UI appears frozen - try entering the cave then resetting while it's running.
 - On linux, scanning doesn't work until the user runs "sudo setcap cap_sys_ptrace=eip EasyAutoTracker" on the executable - need to automate setting this somehow.
 - On windows, minimizing the main control window also minimizes all other windows.
 - Need to revisit Qt's UI element allocation patterns - they currently seem to be leaking when opening and closing windows.
