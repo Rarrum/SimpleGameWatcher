@@ -81,6 +81,7 @@ std::unique_ptr<PCProcessMemory> PCProcessMemory::FindProcess(std::function<bool
 
     do
     {
+        // filter on process name
         std::string processNameLower = WindowsStringToLowerString(pe.szExeFile);
         if (!matchProcessName(processNameLower))
             continue;
@@ -107,6 +108,9 @@ PCProcessMemory::~PCProcessMemory()
 
 bool PCProcessMemory::IsStillAlive() const
 {
+    if (!data)
+        return false;
+
     DWORD exitCode = 0;
     if (GetExitCodeProcess(data->hProcess, &exitCode))
         return exitCode == STILL_ACTIVE;
@@ -128,14 +132,19 @@ void PCProcessMemory::ScanMemory(std::function<bool(uint8_t *start, uint8_t *end
         if (!ret)
             break;
 
-        if (mbi.State == MEM_COMMIT && (mbi.Protect & PAGE_GUARD) != PAGE_GUARD)
+        uint64_t pageStart = (uint64_t)mbi.BaseAddress;
+        uint64_t pageEnd = pageStart + mbi.RegionSize;
+
+        if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE && (mbi.Protect & PAGE_GUARD) != PAGE_GUARD)
         {
+            //TODO: This would be faster if we could filter to just the heaps of the module in question - the windows APIs for heap traversing are super slow though, and just make this worse
+
             pageMemory.resize(mbi.RegionSize);
 
             SIZE_T readBytes = 0;
-            if (!ReadProcessMemory(data->hProcess, (void*)mbi.BaseAddress, pageMemory.data(), mbi.RegionSize, &readBytes))
+            if (!ReadProcessMemory(data->hProcess, (void*)pageStart, pageMemory.data(), mbi.RegionSize, &readBytes))
             {
-                scanAddress = (uint64_t)mbi.BaseAddress + mbi.RegionSize;
+                scanAddress = pageStart + mbi.RegionSize;
                 continue;
             }
 
@@ -144,7 +153,7 @@ void PCProcessMemory::ScanMemory(std::function<bool(uint8_t *start, uint8_t *end
                 break;
         }
 
-        scanAddress = (uint64_t)mbi.BaseAddress + mbi.RegionSize;
+        scanAddress = pageStart + mbi.RegionSize;
     }
 }
 
