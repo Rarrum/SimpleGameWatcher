@@ -18,6 +18,7 @@ namespace
 {
     struct ProcessPage
     {
+        std::string MapName;
         uint64_t Start = 0;
         uint64_t End = 0;
     };
@@ -64,7 +65,7 @@ namespace
             if (pi.Name.empty())
                 continue;
 
-            // virtual address page ranges come from the maps file, of the form: 7ffe9f9ad000-7ffe9f9af000 <other stuff>
+            // virtual address page ranges come from the maps file, of the form: 7ffe9f9ad000-7ffe9f9af000 <dashed-letters> <numbers> <colon:numbers> <numbers> <name>
             std::ifstream mapsFile(stdfs::path(entry.path() / "maps"));
             for (std::string line; std::getline(mapsFile, line); )
             {
@@ -89,6 +90,24 @@ namespace
 
                 if (page.End == page.Start)
                     continue;
+
+                for (int skip = 0; skip < 4; ++skip)
+                {
+                    if (iter != line.end())
+                        ++iter;
+
+                    while (iter != line.end() && !std::isspace(*iter))
+                        ++iter;
+                }
+
+                while (iter != line.end() && std::isspace(*iter))
+                        ++iter;
+
+                page.MapName = std::string(iter, line.end());
+                if (page.MapName.size() >= 2 && page.MapName[0] == '[')
+                    continue;
+
+                std::transform(page.MapName.begin(), page.MapName.end(), page.MapName.begin(), [](char in) { return std::tolower(in); });
 
                 pi.Pages.emplace_back(std::move(page));
             }
@@ -119,9 +138,13 @@ std::unique_ptr<PCProcessMemory> PCProcessMemory::FindProcess(std::function<bool
 
     for (ProcessInfo &pi : allProcesses)
     {
+        // match process them prune out unrelated pages
         if (!matchProcessName(pi.Name))
             continue;
 
+        pi.Pages.erase(std::remove_if(pi.Pages.begin(), pi.Pages.end(), [&](ProcessPage &p) { return !p.MapName.empty() && !matchProcessName(p.MapName); }), pi.Pages.end());
+
+        // scan the remaining pages
         std::unique_ptr<PCProcessMemory> mem = std::unique_ptr<PCProcessMemory>(new PCProcessMemory(std::make_unique<PCProcessMemoryData>()));
         mem->data->Info = std::move(pi);
 
@@ -141,7 +164,9 @@ bool PCProcessMemory::IsStillAlive() const
     if (!data || data->Info.Id == 0)
         return false;
 
-    return !ReadMemory(data->Info.Pages[data->Info.Pages.size() / 2].Start, 1).empty();
+    std::vector<uint8_t> dummyMemory;
+    ReadMemory(dummyMemory, data->Info.Pages[data->Info.Pages.size() / 2].Start, 1);
+    return !dummyMemory.empty();
 }
 
 void PCProcessMemory::ScanMemory(std::function<bool(uint8_t *start, uint8_t *end, uint64_t startAddress)> scanChunk) const
