@@ -90,7 +90,7 @@ const MemorySnapshot SnesMemory::ReadRam() const
 {
     MemorySnapshot snapshot;
     if (HasLocatedRam())
-        snapshot.AllData = data->snesProcess->ReadMemory(data->snesRamAddress, SnesRamSize);
+         data->snesProcess->ReadMemory(snapshot.AllData, data->snesRamAddress, SnesRamSize);
 
     return snapshot;
 }

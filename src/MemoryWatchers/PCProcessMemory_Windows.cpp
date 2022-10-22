@@ -148,14 +148,11 @@ void PCProcessMemory::ScanMemory(std::function<bool(uint8_t *start, uint8_t *end
     }
 }
 
-std::vector<uint8_t> PCProcessMemory::ReadMemory(uint64_t address, uint32_t amount) const
+void PCProcessMemory::ReadMemory(std::vector<uint8_t> &target, uint64_t address, uint32_t amount) const
 {
-    std::vector<uint8_t> memory;
-    memory.resize(amount);
-    if (!ReadProcessMemory(data->hProcess, (void*)address, memory.data(), amount, nullptr))
-        return {};
-
-    return memory;
+    target.resize(amount);
+    if (!ReadProcessMemory(data->hProcess, (void*)address, target.data(), amount, nullptr))
+        target.clear();
 }
 
 #endif

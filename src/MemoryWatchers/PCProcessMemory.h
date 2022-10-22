@@ -21,7 +21,7 @@ public:
 
     bool IsStillAlive() const;
     void ScanMemory(std::function<bool(uint8_t *start, uint8_t *end, uint64_t startAddress)> scanChunk) const;
-    std::vector<uint8_t> ReadMemory(uint64_t address, uint32_t amount) const;
+    void ReadMemory(std::vector<uint8_t> &target, uint64_t address, uint32_t amount) const;
 
 private:
     PCProcessMemory(std::unique_ptr<PCProcessMemoryData> &&from);

@@ -154,50 +154,36 @@ void PCProcessMemory::ScanMemory(std::function<bool(uint8_t *start, uint8_t *end
     for (const ProcessPage &page : data->Info.Pages)
     {
         uint64_t pageSize = page.End - page.Start;
-        pageMemory.resize(pageSize);
-
-        iovec localVec = {0};
-        localVec.iov_base = pageMemory.data();
-        localVec.iov_len = pageMemory.size();
-        iovec remoteVec = {0};
-        remoteVec.iov_base = (void*)page.Start;
-        remoteVec.iov_len = pageSize;
-        ssize_t sizeRead = process_vm_readv(data->Info.Id, &localVec, 1, &remoteVec, 1, 0);
-        if (sizeRead == -1)
+        ReadMemory(pageMemory, page.Start, pageSize);
+        if (pageMemory.empty())
             continue;
-
-        pageMemory.resize(sizeRead);
 
         if (!scanChunk(pageMemory.data(), pageMemory.data() + pageMemory.size(), page.Start))
             break;
     }
 }
 
-std::vector<uint8_t> PCProcessMemory::ReadMemory(uint64_t address, uint32_t amount) const
+void PCProcessMemory::ReadMemory(std::vector<uint8_t> &target, uint64_t address, uint32_t amount) const
 {
     if (!data || data->Info.Id == 0)
-        return {};
+    {
+        target.clear();
+        return;
+    }
 
-    std::vector<uint8_t> memory;
-    memory.resize(amount);
+    target.resize(amount);
 
     iovec localVec = {0};
-    localVec.iov_base = memory.data();
-    localVec.iov_len = memory.size();
+    localVec.iov_base = target.data();
+    localVec.iov_len = target.size();
     iovec remoteVec = {0};
     remoteVec.iov_base = (void*)address;
     remoteVec.iov_len = amount;
     ssize_t sizeRead = process_vm_readv(data->Info.Id, &localVec, 1, &remoteVec, 1, 0);
     if (sizeRead == -1)
-    {
-        memory.clear();
-        return memory;
-    }
+        target.clear();
     else
-    {
-        memory.resize(sizeRead);
-        return memory;
-    }
+        target.resize(sizeRead);
 }
 
 #endif

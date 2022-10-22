@@ -22,30 +22,24 @@ void Lufia2GameWatcher::PollGameState()
             ramPatternsA.emplace_back(0x320, std::vector<uint8_t>{ 0x00, 0x00, 0xA8, 0x10, 0xB0, 0x29, 0xA8, 0x10, 0x0A, 0x28, 0xCC, 0x1C, 0x41, 0x04, 0xB0, 0x29 }); // Name Select
             ramPatternsA.emplace_back(0x320, std::vector<uint8_t>{ 0x00, 0x00, 0x31, 0x4E, 0x43, 0x3C, 0x9C, 0x73, 0x00, 0x00, 0x9C, 0x73, 0x00, 0x00, 0x9C, 0x73 }); // Town and Ancient Cave
             ramPatternsA.emplace_back(0x320, std::vector<uint8_t>{ 0x00, 0x00, 0x41, 0x51, 0x3A, 0x28, 0x56, 0x59, 0xA0, 0x2E, 0x39, 0x37, 0x0D, 0x63, 0xEF, 0x3D }); // Overworld
-            std::vector<uint64_t> ramOffsetsA = FindAnyPatternOffsets(ramPatternsA, start, end);
+            std::vector<uint64_t> ramOffsets = FindAnyPatternOffsets(ramPatternsA, start, end);
 
-            if (ramOffsetsA.empty())
+            if (ramOffsets.empty())
                 return std::numeric_limits<uint64_t>::max();
 
             std::vector<MemorySearchPattern> ramPatternsB;
             ramPatternsB.emplace_back(0x00, std::vector<uint8_t>{ 0x02, 0x00, 0xE0, 0x04, 0x00, 0x00, 0x00, 0x00 }); // Title Screen and Name Select
             ramPatternsB.emplace_back(0x00, std::vector<uint8_t>{ 0x09, 0x53, 0x95, 0xF1, 0x00, 0x00, 0x00, 0x00 }); // Town (initially only)
             ramPatternsB.emplace_back(0xEB, std::vector<uint8_t>{ 0xB0, 0x9E, 0x03, 0xB0, 0x9E, 0x00, 0x00, 0x00 }); // Cave
-            std::vector<uint64_t> ramOffsetsB = FindAnyPatternOffsets(ramPatternsB, start, end);
-
-            if (ramOffsetsB.empty())
-                return std::numeric_limits<uint64_t>::max();
-
-            std::vector<uint64_t> ramOffsetsFinal;
-            std::set_intersection(ramOffsetsA.begin(), ramOffsetsA.end(), ramOffsetsB.begin(), ramOffsetsB.end(), std::back_insert_iterator(ramOffsetsFinal));
+            ramOffsets = FilterAdditionalAnyPatternOffsets(ramOffsets, ramPatternsB, start, end);
 
             //TODO: warn if we find multiple - loading/restoring saved states tend to mess with this, resetting emulator fixes on some emulators
             //TODO: maybe add UI for picking the right one so the user can select from options to try until they find the right one, if we can't find something more solid to do here?
 
-            if (ramOffsetsFinal.empty())
+            if (ramOffsets.empty())
                 return std::numeric_limits<uint64_t>::max();
             else
-                return ramOffsetsFinal[ramOffsetsFinal.size() / 2];
+                return ramOffsets[ramOffsets.size() / 2];
         }))
             return;
     }
