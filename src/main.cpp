@@ -43,7 +43,7 @@ int main(int argc, char **argv)
     createManualTimerButton->setText("Simple Timer");
     QObject::connect(createManualTimerButton, &QPushButton::clicked, [&]()
     {
-        new SimpleTimerWindow(true, &window);
+        new SimpleTimerWindow(true);
     });
     manualLayout->addWidget(createManualTimerButton);
 
@@ -53,8 +53,9 @@ int main(int argc, char **argv)
     QStringList gameList;
     for (auto &gameSetup : allGames)
     {
-        comboGameSelect->addItem(QString::fromStdString(gameSetup->Name()));
-        gameList.append(QString::fromStdString(gameSetup->Name()));
+        std::string gameName = gameSetup->Name();
+        comboGameSelect->addItem(QString::fromStdString(gameName));
+        gameList.append(QString::fromStdString(gameName));
     }
     QStringListModel *gameListModel = new QStringListModel(gameList, &window);
     QCompleter *gameSelectCompleter = new QCompleter(&window);
@@ -86,7 +87,7 @@ int main(int argc, char **argv)
             GameSetupMode *gameModePointer = &gameMode;
             QObject::connect(gameActionButton, &QPushButton::clicked, [=]()
             {
-                gameModePointer->Creator(windowPointer);
+                gameModePointer->Creator();
             });
 
             autoLayout->addWidget(gameActionButton);
@@ -99,7 +100,7 @@ int main(int argc, char **argv)
         GameSetup *gameSetupPointer = gameSetup.get();
         QObject::connect(gameDebugButton, &QPushButton::clicked, [=]()
         {
-            gameSetupPointer->CreateDebugWindow(windowPointer);
+            gameSetupPointer->CreateDebugWindow();
         });
         autoLayout->addWidget(gameDebugButton);
         gameActionButtons.emplace_back(gameDebugButton);
@@ -115,6 +116,11 @@ int main(int argc, char **argv)
     window.setWindowTitle("EasyAutoTracker");
     window.setLayout(topLayout);
     window.show();
+
+    window.closeCallback = [&](ClosableQWidget&)
+    {
+        allGames.clear();
+    };
 
     return app.exec();
 }

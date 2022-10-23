@@ -1,6 +1,6 @@
 #include "DebugGameStateWindow.h"
 
-DebugGameStateWindow::DebugGameStateWindow(std::shared_ptr<GameWatcher> gameWatcher, QWidget *parent): ClosableQWidget(parent)
+DebugGameStateWindow::DebugGameStateWindow(std::shared_ptr<GameWatcher> gameWatcher)
 {
     watcher = gameWatcher;
 

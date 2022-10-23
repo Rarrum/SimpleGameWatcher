@@ -2,7 +2,13 @@ add_rules("mode.debug", "mode.release")
 
 if is_mode("debug") then
     set_symbols("debug")
+    add_defines("DEBUG")
+    set_optimize("none")
 end
+
+--if is_mode("release") then
+--    set_symbols("debug")
+--end
 
 target("EasyAutoTracker")
     set_languages("cxx20")

@@ -1,9 +1,26 @@
 #include "GameSetup.h"
 
-void GameSetup::CreateDebugWindow(QWidget *parent)
+GameSetup::~GameSetup()
+{
+    if (mainPollTimer)
+    {
+        delete mainPollTimer;
+        mainPollTimer = nullptr;
+    }
+    
+    for (SimpleTimerWindow *timerWindow : allSimpleTimers)
+        delete timerWindow;
+    allSimpleTimers.clear();
+
+    for (DebugGameStateWindow *debugWindow : allDebugWindows)
+        delete debugWindow;
+    allDebugWindows.clear();
+}
+
+void GameSetup::CreateDebugWindow()
 {
     std::shared_ptr<GameWatcher> watcher = GetOrCreateWatcherAndStartPolling();
-    DebugGameStateWindow *debugWindow = new DebugGameStateWindow(watcher, parent);
+    DebugGameStateWindow *debugWindow = new DebugGameStateWindow(watcher);
     debugWindow->closeCallback = [this](ClosableQWidget &closingWidget)
     {
         DebugGameStateWindow* hax = (DebugGameStateWindow*)&closingWidget;
@@ -15,9 +32,9 @@ void GameSetup::CreateDebugWindow(QWidget *parent)
     allDebugWindows.emplace_back(debugWindow);
 }
 
-SimpleTimerWindow* GameSetup::CreateSimpleTimer(QWidget *parent)
+SimpleTimerWindow* GameSetup::CreateSimpleTimer()
 {
-    SimpleTimerWindow *timerWindow = new SimpleTimerWindow(false, parent);
+    SimpleTimerWindow *timerWindow = new SimpleTimerWindow(false);
 
     timerWindow->closeCallback = [this](ClosableQWidget &closingWidget)
     {

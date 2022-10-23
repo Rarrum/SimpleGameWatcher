@@ -17,7 +17,7 @@
 class SimpleTimerWindow: public DraggableQWidget
 {
 public:
-    SimpleTimerWindow(bool showControls, QWidget *parent);
+    SimpleTimerWindow(bool showControls);
 
     inline void SetWatcher(std::shared_ptr<GameWatcher> gameWatcher) { watcher = gameWatcher; }
     inline void ClearWatcher() { watcher.reset(); } //TODO: why do we need this?  dtor should free watcher.. is dtor not being called on window close!?

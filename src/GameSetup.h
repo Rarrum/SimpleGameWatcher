@@ -16,25 +16,25 @@
 struct GameSetupMode
 {
     GameSetupMode() = default;
-    inline GameSetupMode(const std::string &name, std::function<void(QWidget *parent)> creator)
+    inline GameSetupMode(const std::string &name, std::function<void()> creator)
     {
         Name = name;
         Creator = creator;
     }
 
     std::string Name;
-    std::function<void(QWidget *parent)> Creator;
+    std::function<void()> Creator;
 };
 
 class GameSetup
 {
 public:
-    virtual ~GameSetup() = default;
+    virtual ~GameSetup();
 
     virtual std::string Name() const = 0;
     virtual std::vector<GameSetupMode>& Entries() = 0;
 
-    void CreateDebugWindow(QWidget *parent); //called by main for every game type
+    void CreateDebugWindow(); //called by main for every game type
 
 protected:
     virtual std::shared_ptr<GameWatcher> CreateGameSpecificWatcher() = 0;
@@ -58,7 +58,7 @@ protected:
         return watcher;
     }
 
-    SimpleTimerWindow* CreateSimpleTimer(QWidget *parent);
+    SimpleTimerWindow* CreateSimpleTimer();
 
     virtual std::shared_ptr<GameWatcher> onWatcherTimerUpdate();
 
