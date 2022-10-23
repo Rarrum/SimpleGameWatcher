@@ -10,7 +10,6 @@ class Lufia2GameSetup: public GameSetup
 {
 public:
     Lufia2GameSetup();
-    ~Lufia2GameSetup();
     std::string Name() const override;
     std::vector<GameSetupMode>& Entries() override;
 

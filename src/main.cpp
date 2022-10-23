@@ -8,6 +8,7 @@
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QGridLayout>
 #include <QComboBox>
 #include <QStringListModel>
 #include <QCompleter>
@@ -158,7 +159,7 @@ int main(int argc, char **argv)
                 else
                 {
                     activeGameStatusLabel->setText(QString::fromStdString(warning));
-                    activeGameStatusLabel->setStyleSheet("QLabel { color : yellow; }");
+                    activeGameStatusLabel->setStyleSheet("QLabel { color : goldenrod; }");
                 }
             }
             else

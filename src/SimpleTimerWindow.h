@@ -12,14 +12,10 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include "GameWatcher.h"
-
 class SimpleTimerWindow: public DraggableQWidget
 {
 public:
     SimpleTimerWindow(bool showControls);
-
-    inline void SetWatcher(std::shared_ptr<GameWatcher> gameWatcher) { watcher = gameWatcher; }
 
     inline void SetStartCheck(std::function<bool()> shouldStart) { shouldStartCallback = shouldStart; }
     inline void SetStopCheck(std::function<bool()> shouldStop) { shouldStopCallback = shouldStop; }
@@ -45,16 +41,12 @@ private slots:
     QPushButton *buttonStart = nullptr;
     QPushButton *buttonStop = nullptr;
 
-    QVBoxLayout *controlsLayout = nullptr;
-    QHBoxLayout *mainLayout = nullptr;
-
     QTimer *timer = nullptr;
     std::chrono::steady_clock::time_point timerStart;
     std::chrono::steady_clock::time_point timerEnd;
     bool timerStarted = false;
     bool timerPaused = false;
 
-    std::shared_ptr<GameWatcher> watcher;
     std::function<bool()> shouldStartCallback;
     std::function<bool()> shouldStopCallback;
     std::function<bool()> shouldResetCallback;

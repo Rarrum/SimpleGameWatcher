@@ -38,7 +38,7 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
     numberDisplay = new QLCDNumber(this);
     numberDisplay->setMouseTracking(true); // for the resize cursor change to work correctly
 
-    mainLayout = new QHBoxLayout();
+    QHBoxLayout *mainLayout = new QHBoxLayout();
     mainLayout->addWidget(numberDisplay, 95);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
@@ -81,7 +81,7 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
             buttonStart->setEnabled(true);
         });
 
-        controlsLayout = new QVBoxLayout();
+        QVBoxLayout *controlsLayout = new QVBoxLayout();
         controlsLayout->addWidget(buttonStart);
         controlsLayout->addWidget(buttonStop);
 
