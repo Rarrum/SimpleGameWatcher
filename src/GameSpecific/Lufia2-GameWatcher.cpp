@@ -33,13 +33,22 @@ void Lufia2GameWatcher::PollGameState()
             ramPatternsB.emplace_back(0xEB, std::vector<uint8_t>{ 0xB0, 0x9E, 0x03, 0xB0, 0x9E, 0x00, 0x00, 0x00 }); // Cave
             ramOffsets = FilterAdditionalAnyPatternOffsets(ramOffsets, ramPatternsB, start, end);
 
-            //TODO: warn if we find multiple - loading/restoring saved states tend to mess with this, resetting emulator fixes on some emulators
             //TODO: maybe add UI for picking the right one so the user can select from options to try until they find the right one, if we can't find something more solid to do here?
 
             if (ramOffsets.empty())
+            {
+                lastWarningForUser = "Memory pattern not found";
                 return std::numeric_limits<uint64_t>::max();
+            }
             else
+            {
+                if (ramOffsets.size() > 1)
+                    lastWarningForUser = "Too many memory patterns found";
+                else
+                    lastWarningForUser.clear();
+
                 return ramOffsets[ramOffsets.size() / 2];
+            }
         }))
             return;
     }

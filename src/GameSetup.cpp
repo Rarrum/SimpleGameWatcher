@@ -1,9 +1,29 @@
 #include "GameSetup.h"
 
+void GameSetup::StartWatching()
+{
+    if (watcherToPoll) //should not have been called, already running?
+        return;
+
+    watcherToPoll = CreateGameSpecificWatcher();
+
+    mainPollTimer = std::make_unique<QTimer>();
+    QObject::connect(mainPollTimer.get(), &QTimer::timeout, [this](){ onWatcherTimerUpdate(); });
+    mainPollTimer->start(1000 / 60);
+}
+
+void GameSetup::CloseWindowsAndStopWatching()
+{
+    allSimpleTimers.clear();
+    allDebugWindows.clear();
+    mainPollTimer.reset();
+
+    watcherToPoll.reset();
+}
+
 void GameSetup::CreateDebugWindow()
 {
-    std::shared_ptr<GameWatcher> watcher = GetOrCreateWatcherAndStartPolling();
-    std::unique_ptr<DebugGameStateWindow> debugWindow = std::make_unique<DebugGameStateWindow>(watcher);
+    std::unique_ptr<DebugGameStateWindow> debugWindow = std::make_unique<DebugGameStateWindow>(watcherToPoll);
 
     allDebugWindows.emplace_back(std::move(debugWindow));
 }
@@ -16,21 +36,12 @@ SimpleTimerWindow& GameSetup::CreateSimpleTimer()
     return *allSimpleTimers.back().get();
 }
 
-std::shared_ptr<GameWatcher> GameSetup::onWatcherTimerUpdate()
+void GameSetup::onWatcherTimerUpdate()
 {
-    std::shared_ptr<GameWatcher> watcher = watcherToPoll.lock();
-    if (!watcher)
-    {
-        mainPollTimer->stop();
-        mainPollTimer.reset();
-        return {};
-    }
+    watcherToPoll->PollGameState();
 
-    //TODO: notifications for when we lose game state
-
-    watcher->PollGameState();
-
-    if (watcher->IsReady())
+    // only update normal windows if the watcher is working
+    if (watcherToPoll->IsReady())
     {
         for (std::unique_ptr<SimpleTimerWindow> &timerWindow : allSimpleTimers)
             timerWindow->RefreshStateFromWatcher();
@@ -40,7 +51,7 @@ std::shared_ptr<GameWatcher> GameSetup::onWatcherTimerUpdate()
     for (std::unique_ptr<DebugGameStateWindow> &debugWindow : allDebugWindows)
         debugWindow->RefreshStateFromWatcher();
 
-    // we free and clean out closed windows on the timer tick, rather than in direct response to the window close (to avoid freeing something that's actively making the close callback)
+    // we free and clean out user-closed windows on the timer tick, rather than in direct response to the window close (to avoid freeing something that's actively making the close callback)
     for (auto i = allSimpleTimers.begin(); i != allSimpleTimers.end(); )
     {
         if (!(**i).isVisible())
@@ -57,5 +68,6 @@ std::shared_ptr<GameWatcher> GameSetup::onWatcherTimerUpdate()
             ++i;
     }
 
-    return watcher;
+    if (OnWatcherUpdate)
+        OnWatcherUpdate();
 }

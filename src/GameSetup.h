@@ -34,37 +34,24 @@ public:
     virtual std::string Name() const = 0;
     virtual std::vector<GameSetupMode>& Entries() = 0;
 
-    void CreateDebugWindow(); //called by main for every game type
+    virtual void StartWatching();
+    std::function<void()> OnWatcherUpdate;
+    virtual void CloseWindowsAndStopWatching();
+
+    inline std::shared_ptr<GameWatcher> Watcher() { return watcherToPoll; }
+
+    void CreateDebugWindow(); //called by main as needed
 
 protected:
     virtual std::shared_ptr<GameWatcher> CreateGameSpecificWatcher() = 0;
 
-    std::shared_ptr<GameWatcher> GetOrCreateWatcherAndStartPolling()
-    {
-        std::shared_ptr<GameWatcher> watcher = watcherToPoll.lock();
-        if (!watcher)
-        {
-            watcher = CreateGameSpecificWatcher();
-            watcherToPoll = watcher;
-        }
-        
-        if (!mainPollTimer)
-        {
-            mainPollTimer = std::make_unique<QTimer>();
-            QObject::connect(mainPollTimer.get(), &QTimer::timeout, [this](){ onWatcherTimerUpdate(); });
-            mainPollTimer->start(1000 / 60);
-        }
-
-        return watcher;
-    }
+    virtual void onWatcherTimerUpdate();
 
     SimpleTimerWindow& CreateSimpleTimer();
 
-    virtual std::shared_ptr<GameWatcher> onWatcherTimerUpdate();
-
 private:
     std::unique_ptr<QTimer> mainPollTimer;
-    std::weak_ptr<GameWatcher> watcherToPoll;
+    std::shared_ptr<GameWatcher> watcherToPoll;
 
     std::list<std::unique_ptr<DebugGameStateWindow>> allDebugWindows;
     std::list<std::unique_ptr<SimpleTimerWindow>> allSimpleTimers;
