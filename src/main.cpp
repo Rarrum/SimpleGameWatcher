@@ -146,8 +146,8 @@ int main(int argc, char **argv)
 
         activeGame->OnWatcherUpdate = [&]()
         {
-            bool isReady = activeGame->Watcher()->IsReady();
-            std::string warning = activeGame->Watcher()->GetLastWarning();
+            bool isReady = activeGame->Watcher() && activeGame->Watcher()->IsReady();
+            std::string warning = activeGame->Watcher() ? activeGame->Watcher()->GetLastWarning() : std::string();
 
             if (isReady)
             {
