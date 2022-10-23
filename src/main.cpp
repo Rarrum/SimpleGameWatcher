@@ -30,7 +30,6 @@ int main(int argc, char **argv)
     // main window
     QApplication app(argc, argv);
     ClosableQWidget window = ClosableQWidget();
-    ClosableQWidget *windowPointer = &window;
     window.resize(450, 400);
 
     // manual section
@@ -193,6 +192,8 @@ int main(int argc, char **argv)
 
         for (QPushButton *gameAutoButton : gameActionButtons)
             gameAutoButton->setEnabled(false);
+
+        activeGameStatusLabel->setText("");
     };
 
     QGroupBox *gameSetupBox = new QGroupBox("Game Selection");
