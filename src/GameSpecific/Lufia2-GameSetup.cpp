@@ -17,10 +17,26 @@ namespace
             return snes.HasLocatedRam();
         }
 
+        bool ShouldTriggerStart()
+        {
+            return (GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik");
+        }
+
+        bool ShouldTriggerStop()
+        {
+            return GetIntegerValue("Floor") == 99 && GetIntegerValue("BlobHP") == 0 && GetFlagValue("BlobDeathAnimation");
+        }
+
+        bool ShouldTriggerReset()
+        {
+            return GetIntegerValue("Floor") != 99 && (GetFlagValue("OnTitleMenu") || (GetFlagValue("OnNameSelect") && !GetFlagValue("ScreenFading")));
+        }
+
     protected:
         void PollGameState() override
         {
             // find ram
+            lastWarningForUser = "Could not find snes RAM";
             if (!snes.HasLocatedRam())
             {
                 if (!snes.TryLocateRam([&](uint8_t *start, uint8_t *end)
@@ -36,9 +52,11 @@ namespace
                         return std::numeric_limits<uint64_t>::max();
 
                     std::vector<MemorySearchPattern> ramPatternsB;
-                    ramPatternsB.emplace_back(0x00, std::vector<uint8_t>{ 0x02, 0x00, 0xE0, 0x04, 0x00, 0x00, 0x00, 0x00 }); // Title Screen and Name Select
                     ramPatternsB.emplace_back(0x00, std::vector<uint8_t>{ 0x09, 0x53, 0x95, 0xF1, 0x00, 0x00, 0x00, 0x00 }); // Town (initially only)
-                    ramPatternsB.emplace_back(0xEB, std::vector<uint8_t>{ 0xB0, 0x9E, 0x03, 0xB0, 0x9E, 0x00, 0x00, 0x00 }); // Cave
+                    ramPatternsB.emplace_back(0x01, std::vector<uint8_t>{ 0x00, 0xE0, 0x04, 0x00, 0x00, 0x00, 0x00 }); // Title Screen and Name Select (sometimes)
+                    ramPatternsB.emplace_back(0x19, std::vector<uint8_t>{ 0x2A, 0xA6, 0x7E, 0x29, 0xA6, 0x7E }); // Name Select and stuff (until menu opened)
+                    ramPatternsB.emplace_back(0xEC, std::vector<uint8_t>{ 0x9E, 0x03, 0xB0, 0x9E, 0x00, 0x00, 0x00 }); // Cave
+                    ramPatternsB.emplace_back(0xEC, std::vector<uint8_t>{ 0x9E, 0x08, 0xB0, 0x9E, 0x00, 0x00, 0x00 }); // Cave
                     ramOffsets = FilterAdditionalAnyPatternOffsets(ramOffsets, ramPatternsB, start, end);
 
                     //TODO: maybe add UI for picking the right one so the user can select from options to try until they find the right one, if we can't find something more solid to do here?
@@ -52,8 +70,6 @@ namespace
                     {
                         if (ramOffsets.size() > 1)
                             lastWarningForUser = "Too many memory patterns found";
-                        else
-                            lastWarningForUser.clear();
 
                         return ramOffsets[ramOffsets.size() / 2];
                     }
@@ -64,6 +80,8 @@ namespace
             const MemorySnapshot ram = snes.ReadRam();
             if (ram.AllData.empty())
                 return;
+
+            lastWarningForUser.clear();
 
             // grab data from ram and store it for later use
             int floor = ram.ReadInteger<uint8_t>(0x0B75);
@@ -98,16 +116,87 @@ Lufia2GameSetup::Lufia2GameSetup()
     allModes.emplace_back("Ancient Cave - Simple Timer", [this]()
     {
         std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
-        SimpleTimerWindow &timer = CreateSimpleTimer();
-        timer.SetWatcher(watcher);
-        timer.SetStartCheck([=]() { return (watcher->GetFlagValue("OnNameSelect") && watcher->GetFlagValue("ScreenFading")) || watcher->GetFlagValue("InGruberik") || watcher->GetIntegerValue("Floor") != 0; });
-        timer.SetStopCheck([=]() { return watcher->GetIntegerValue("Floor") == 99 && watcher->GetIntegerValue("BlobHP") == 0 && watcher->GetFlagValue("BlobDeathAnimation"); });
-        timer.SetResetCheck([=]() { return watcher->GetFlagValue("OnTitleMenu") || (watcher->GetFlagValue("OnNameSelect") && !watcher->GetFlagValue("ScreenFading")); });
+        SimpleTimerWindow *timer = CreateSimpleTimer();
+        timer->SetStartCheck([=]() { return watcher->ShouldTriggerStart(); });
+        timer->SetStopCheck([=]() { return watcher->ShouldTriggerStop(); });
+        timer->SetResetCheck([=]() { return watcher->ShouldTriggerReset(); });
     });
-}
 
-Lufia2GameSetup::~Lufia2GameSetup()
-{
+    allModes.emplace_back("Ancient Cave - Every 10 Floors", [this]()
+    {
+        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
+        NestedTimerWindow *timer = CreateNestedTimer();
+
+        for (int i = 10; i < 100; i += 10)
+            timer->AddNestedTimer("Floor " + std::to_string(i));
+
+        timer->AddNestedTimer("Jelly Kill");
+
+        timer->OnRefresh = [=]()
+        {
+            if (watcher->ShouldTriggerStart())
+                timer->SetActiveTimer("Floor 10");
+            else if (watcher->ShouldTriggerStop())
+                timer->StopAllTimers();
+            else if (watcher->ShouldTriggerReset())
+                timer->ResetAllTimers();
+            else
+            {
+                int floor = watcher->GetIntegerValue("Floor");
+                if (floor < 90)
+                {
+                    int nearest10Floor = (floor / 10) * 10 + 10;
+                    timer->SetActiveTimer("Floor " + std::to_string(nearest10Floor));
+                }
+                else if (floor != 99)
+                    timer->SetActiveTimer("Jelly Kill");
+            }
+        };
+    });
+
+    allModes.emplace_back("Ancient Cave - Major Landmarks", [this]()
+    {
+        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
+        NestedTimerWindow *timer = CreateNestedTimer();
+
+        const std::string nameEnter14 = "Red Cores\r\n(11-13)";
+        const std::string nameEnter35 = "Blue Cores\r\n(32-34)";
+        const std::string nameEnter44 = "Green Cores\r\n(41-43)";
+        const std::string nameEnter61 = "No Cores\r\n(58-60)";
+        const std::string nameEnter88 = "Archfiend Freedom\r\n(88+)";
+        const std::string nameKillJelly = "Jelly Kill";
+
+        timer->AddNestedTimer(nameEnter14);
+        timer->AddNestedTimer(nameEnter35);
+        timer->AddNestedTimer(nameEnter44);
+        timer->AddNestedTimer(nameEnter61);
+        timer->AddNestedTimer(nameEnter88);
+        timer->AddNestedTimer(nameKillJelly);
+
+        timer->OnRefresh = [=]()
+        {
+            if (watcher->ShouldTriggerStart())
+                timer->SetActiveTimer(nameEnter14);
+            else if (watcher->ShouldTriggerStop())
+                timer->StopAllTimers();
+            else if (watcher->ShouldTriggerReset())
+                timer->ResetAllTimers();
+            else
+            {
+                int floor = watcher->GetIntegerValue("Floor");
+                if (floor == 14)
+                    timer->SetActiveTimer(nameEnter35);
+                else if (floor == 35)
+                    timer->SetActiveTimer(nameEnter44);
+                else if (floor == 44)
+                    timer->SetActiveTimer(nameEnter61);
+                else if (floor == 61)
+                    timer->SetActiveTimer(nameEnter88);
+                else if (floor >= 88 && floor < 99)
+                    timer->SetActiveTimer(nameKillJelly);
+            }
+        };
+    });
 }
 
 std::string Lufia2GameSetup::Name() const

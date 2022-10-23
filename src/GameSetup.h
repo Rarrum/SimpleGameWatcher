@@ -11,6 +11,7 @@
 
 #include "GameWatcher.h"
 #include "SimpleTimerWindow.h"
+#include "NestedTimerWindow.h"
 #include "DebugGameStateWindow.h"
 
 struct GameSetupMode
@@ -47,7 +48,8 @@ protected:
 
     virtual void onWatcherTimerUpdate();
 
-    SimpleTimerWindow& CreateSimpleTimer();
+    SimpleTimerWindow* CreateSimpleTimer();
+    NestedTimerWindow* CreateNestedTimer();
 
 private:
     std::unique_ptr<QTimer> mainPollTimer;
@@ -55,4 +57,5 @@ private:
 
     std::list<std::unique_ptr<DebugGameStateWindow>> allDebugWindows;
     std::list<std::unique_ptr<SimpleTimerWindow>> allSimpleTimers;
+    std::list<std::unique_ptr<NestedTimerWindow>> allNestedTimers;
 };
