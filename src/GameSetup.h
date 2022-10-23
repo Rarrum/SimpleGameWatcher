@@ -29,7 +29,7 @@ struct GameSetupMode
 class GameSetup
 {
 public:
-    virtual ~GameSetup();
+    virtual ~GameSetup() = default;
 
     virtual std::string Name() const = 0;
     virtual std::vector<GameSetupMode>& Entries() = 0;
@@ -50,22 +50,22 @@ protected:
         
         if (!mainPollTimer)
         {
-            mainPollTimer = new QTimer();
-            QObject::connect(mainPollTimer, &QTimer::timeout, [this](){ onWatcherTimerUpdate(); });
+            mainPollTimer = std::make_unique<QTimer>();
+            QObject::connect(mainPollTimer.get(), &QTimer::timeout, [this](){ onWatcherTimerUpdate(); });
             mainPollTimer->start(1000 / 60);
         }
 
         return watcher;
     }
 
-    SimpleTimerWindow* CreateSimpleTimer();
+    SimpleTimerWindow& CreateSimpleTimer();
 
     virtual std::shared_ptr<GameWatcher> onWatcherTimerUpdate();
 
 private:
-    QTimer *mainPollTimer = nullptr;
+    std::unique_ptr<QTimer> mainPollTimer;
     std::weak_ptr<GameWatcher> watcherToPoll;
 
-    std::list<DebugGameStateWindow*> allDebugWindows;
-    std::list<SimpleTimerWindow*> allSimpleTimers;
+    std::list<std::unique_ptr<DebugGameStateWindow>> allDebugWindows;
+    std::list<std::unique_ptr<SimpleTimerWindow>> allSimpleTimers;
 };

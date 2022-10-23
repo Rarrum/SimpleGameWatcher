@@ -20,7 +20,6 @@ public:
     SimpleTimerWindow(bool showControls);
 
     inline void SetWatcher(std::shared_ptr<GameWatcher> gameWatcher) { watcher = gameWatcher; }
-    inline void ClearWatcher() { watcher.reset(); } //TODO: why do we need this?  dtor should free watcher.. is dtor not being called on window close!?
 
     inline void SetStartCheck(std::function<bool()> shouldStart) { shouldStartCallback = shouldStart; }
     inline void SetStopCheck(std::function<bool()> shouldStop) { shouldStopCallback = shouldStop; }

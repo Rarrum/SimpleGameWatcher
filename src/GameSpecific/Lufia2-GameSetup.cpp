@@ -7,11 +7,11 @@ Lufia2GameSetup::Lufia2GameSetup()
     allModes.emplace_back("Ancient Cave - Simple Timer", [this]()
     {
         std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(GetOrCreateWatcherAndStartPolling());
-        SimpleTimerWindow *timer = CreateSimpleTimer();
-        timer->SetWatcher(watcher);
-        timer->SetStartCheck([=]() { return (watcher->GetFlagValue("OnNameSelect") && watcher->GetFlagValue("ScreenFading")) || watcher->GetFlagValue("InGruberik") || watcher->GetIntegerValue("Floor") != 0; });
-        timer->SetStopCheck([=]() { return watcher->GetIntegerValue("Floor") == 99 && watcher->GetIntegerValue("BlobHP") == 0 && watcher->GetFlagValue("BlobDeathAnimation"); });
-        timer->SetResetCheck([=]() { return watcher->GetFlagValue("OnTitleMenu") || (watcher->GetFlagValue("OnNameSelect") && !watcher->GetFlagValue("ScreenFading")); });
+        SimpleTimerWindow &timer = CreateSimpleTimer();
+        timer.SetWatcher(watcher);
+        timer.SetStartCheck([=]() { return (watcher->GetFlagValue("OnNameSelect") && watcher->GetFlagValue("ScreenFading")) || watcher->GetFlagValue("InGruberik") || watcher->GetIntegerValue("Floor") != 0; });
+        timer.SetStopCheck([=]() { return watcher->GetIntegerValue("Floor") == 99 && watcher->GetIntegerValue("BlobHP") == 0 && watcher->GetFlagValue("BlobDeathAnimation"); });
+        timer.SetResetCheck([=]() { return watcher->GetFlagValue("OnTitleMenu") || (watcher->GetFlagValue("OnNameSelect") && !watcher->GetFlagValue("ScreenFading")); });
     });
 }
 
