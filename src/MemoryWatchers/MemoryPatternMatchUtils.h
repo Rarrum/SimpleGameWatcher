@@ -17,4 +17,6 @@ struct MemorySearchPattern
     std::vector<uint8_t> Pattern;
 };
 
-std::vector<uint64_t> FindAnyPatternOffsets(const std::vector<MemorySearchPattern> &patterns, uint8_t *memoryStart, uint8_t *memoryEnd);
+std::vector<uint64_t> FindAnyPatternOffsets(const std::vector<MemorySearchPattern> &patterns, const uint8_t *memoryStart, const uint8_t *memoryEnd);
+
+std::vector<uint64_t> FilterAdditionalAnyPatternOffsets(const std::vector<uint64_t> &initialOffsets, const std::vector<MemorySearchPattern> &patterns, const uint8_t *memoryStart, const uint8_t *memoryEnd);

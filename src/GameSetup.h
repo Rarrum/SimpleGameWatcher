@@ -16,14 +16,14 @@
 struct GameSetupMode
 {
     GameSetupMode() = default;
-    inline GameSetupMode(const std::string &name, std::function<void(QWidget *parent)> creator)
+    inline GameSetupMode(const std::string &name, std::function<void()> creator)
     {
         Name = name;
         Creator = creator;
     }
 
     std::string Name;
-    std::function<void(QWidget *parent)> Creator;
+    std::function<void()> Creator;
 };
 
 class GameSetup
@@ -34,38 +34,25 @@ public:
     virtual std::string Name() const = 0;
     virtual std::vector<GameSetupMode>& Entries() = 0;
 
-    void CreateDebugWindow(QWidget *parent); //called by main for every game type
+    virtual void StartWatching();
+    std::function<void()> OnWatcherUpdate;
+    virtual void CloseWindowsAndStopWatching();
+
+    inline std::shared_ptr<GameWatcher> Watcher() { return watcherToPoll; }
+
+    void CreateDebugWindow(); //called by main as needed
 
 protected:
     virtual std::shared_ptr<GameWatcher> CreateGameSpecificWatcher() = 0;
 
-    std::shared_ptr<GameWatcher> GetOrCreateWatcherAndStartPolling()
-    {
-        std::shared_ptr<GameWatcher> watcher = watcherToPoll.lock();
-        if (!watcher)
-        {
-            watcher = CreateGameSpecificWatcher();
-            watcherToPoll = watcher;
-        }
-        
-        if (!mainPollTimer)
-        {
-            mainPollTimer = new QTimer();
-            QObject::connect(mainPollTimer, &QTimer::timeout, [this](){ onWatcherTimerUpdate(); });
-            mainPollTimer->start(1000 / 60);
-        }
+    virtual void onWatcherTimerUpdate();
 
-        return watcher;
-    }
-
-    SimpleTimerWindow* CreateSimpleTimer(QWidget *parent);
-
-    virtual std::shared_ptr<GameWatcher> onWatcherTimerUpdate();
+    SimpleTimerWindow& CreateSimpleTimer();
 
 private:
-    QTimer *mainPollTimer = nullptr;
-    std::weak_ptr<GameWatcher> watcherToPoll;
+    std::unique_ptr<QTimer> mainPollTimer;
+    std::shared_ptr<GameWatcher> watcherToPoll;
 
-    std::list<DebugGameStateWindow*> allDebugWindows;
-    std::list<SimpleTimerWindow*> allSimpleTimers;
+    std::list<std::unique_ptr<DebugGameStateWindow>> allDebugWindows;
+    std::list<std::unique_ptr<SimpleTimerWindow>> allSimpleTimers;
 };

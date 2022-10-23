@@ -18,7 +18,7 @@ namespace
     }
 }
 
-SimpleTimerWindow::SimpleTimerWindow(bool showControls, QWidget *parent): DraggableQWidget(parent)
+SimpleTimerWindow::SimpleTimerWindow(bool showControls)
 {
     resize(225, 50);
     setWindowTitle("Timer");

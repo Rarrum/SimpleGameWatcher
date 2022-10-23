@@ -1,60 +1,73 @@
 #include "GameSetup.h"
 
-void GameSetup::CreateDebugWindow(QWidget *parent)
+void GameSetup::StartWatching()
 {
-    std::shared_ptr<GameWatcher> watcher = GetOrCreateWatcherAndStartPolling();
-    DebugGameStateWindow *debugWindow = new DebugGameStateWindow(watcher, parent);
-    debugWindow->closeCallback = [this](ClosableQWidget &closingWidget)
-    {
-        DebugGameStateWindow* hax = (DebugGameStateWindow*)&closingWidget;
-        hax->ClearWatcher(); //TODO: Qt is not calling dtor on close!?
+    if (watcherToPoll) //should not have been called, already running?
+        return;
 
-        allDebugWindows.remove_if([&](DebugGameStateWindow *existing){ return existing == &closingWidget; });
-    };
+    watcherToPoll = CreateGameSpecificWatcher();
 
-    allDebugWindows.emplace_back(debugWindow);
+    mainPollTimer = std::make_unique<QTimer>();
+    QObject::connect(mainPollTimer.get(), &QTimer::timeout, [this](){ onWatcherTimerUpdate(); });
+    mainPollTimer->start(1000 / 60);
 }
 
-SimpleTimerWindow* GameSetup::CreateSimpleTimer(QWidget *parent)
+void GameSetup::CloseWindowsAndStopWatching()
 {
-    SimpleTimerWindow *timerWindow = new SimpleTimerWindow(false, parent);
+    allSimpleTimers.clear();
+    allDebugWindows.clear();
+    mainPollTimer.reset();
 
-    timerWindow->closeCallback = [this](ClosableQWidget &closingWidget)
-    {
-        SimpleTimerWindow* hax = (SimpleTimerWindow*)&closingWidget;
-        hax->ClearWatcher(); //TODO: Qt is not calling dtor on close!?
-
-        allSimpleTimers.remove_if([&](SimpleTimerWindow *existing){ return existing == &closingWidget; });
-    };
-
-    allSimpleTimers.emplace_back(timerWindow);
-    return timerWindow;
+    watcherToPoll.reset();
 }
 
-std::shared_ptr<GameWatcher> GameSetup::onWatcherTimerUpdate()
+void GameSetup::CreateDebugWindow()
 {
-    std::shared_ptr<GameWatcher> watcher = watcherToPoll.lock();
-    if (!watcher)
+    std::unique_ptr<DebugGameStateWindow> debugWindow = std::make_unique<DebugGameStateWindow>(watcherToPoll);
+
+    allDebugWindows.emplace_back(std::move(debugWindow));
+}
+
+SimpleTimerWindow& GameSetup::CreateSimpleTimer()
+{
+    std::unique_ptr<SimpleTimerWindow> timerWindow = std::make_unique<SimpleTimerWindow>(false);
+
+    allSimpleTimers.emplace_back(std::move(timerWindow));
+    return *allSimpleTimers.back().get();
+}
+
+void GameSetup::onWatcherTimerUpdate()
+{
+    watcherToPoll->PollGameState();
+
+    // only update normal windows if the watcher is working
+    if (watcherToPoll->IsReady())
     {
-        mainPollTimer->stop();
-        delete mainPollTimer;
-        mainPollTimer = nullptr;
-        return {};
-    }
-
-    //TODO: notifications for when we lose game state
-
-    watcher->PollGameState();
-
-    if (watcher->IsReady())
-    {
-        for (SimpleTimerWindow *timerWindow : allSimpleTimers)
+        for (std::unique_ptr<SimpleTimerWindow> &timerWindow : allSimpleTimers)
             timerWindow->RefreshStateFromWatcher();
     }
 
     // always update debug stuff, for our own sanity
-    for (DebugGameStateWindow *debugWindow : allDebugWindows)
+    for (std::unique_ptr<DebugGameStateWindow> &debugWindow : allDebugWindows)
         debugWindow->RefreshStateFromWatcher();
 
-    return watcher;
+    // we free and clean out user-closed windows on the timer tick, rather than in direct response to the window close (to avoid freeing something that's actively making the close callback)
+    for (auto i = allSimpleTimers.begin(); i != allSimpleTimers.end(); )
+    {
+        if (!(**i).isVisible())
+            i = allSimpleTimers.erase(i);
+        else
+            ++i;
+    }
+
+    for (auto i = allDebugWindows.begin(); i != allDebugWindows.end(); )
+    {
+        if (!(**i).isVisible())
+            i = allDebugWindows.erase(i);
+        else
+            ++i;
+    }
+
+    if (OnWatcherUpdate)
+        OnWatcherUpdate();
 }
