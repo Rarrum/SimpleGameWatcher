@@ -1,7 +1,7 @@
 # SimpleGameWatcher
 Utilities for watching game states to automate control of simple streaming-friendly UI elements.
 
-NOTE: This project is still in its extremely early stages of development.  Not much exists yet beyond a simple timer and auto-controls for a single scenario in a single game.
+NOTE: This project is still in its extremely early stages of development.  Not much exists yet beyond simple timer and auto-controls for a single game mode.
 
 # Usage
 Simply run it, select the game on the right, and click the buttons below it to bring up the supported UI for that game.
