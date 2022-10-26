@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "DraggableQWidget.h"
+#include "UpdatableGameWindow.h"
 
 #include <QLCDNumber>
 #include <QMenu>
@@ -12,7 +13,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-class SimpleTimerWindow: public DraggableQWidget
+class SimpleTimerWindow: public DraggableQWidget, public UpdatableGameWindow
 {
 public:
     SimpleTimerWindow(bool showControls);
@@ -21,7 +22,8 @@ public:
     inline void SetStopCheck(std::function<bool()> shouldStop) { shouldStopCallback = shouldStop; }
     inline void SetResetCheck(std::function<bool()> shouldReset) { shouldResetCallback = shouldReset; }
 
-    void RefreshStateFromWatcher();
+    void RefreshState() override;
+    inline bool IsStillOpen() const override { return isVisible(); }
 
 protected:
     void StartTimer();

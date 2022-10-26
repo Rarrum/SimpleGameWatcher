@@ -14,8 +14,8 @@
 #include <QCompleter>
 #include <QLabel>
 
-#include "ClosableQWidget.h"
-#include "SimpleTimerWindow.h"
+#include "Widgets/ClosableQWidget.h"
+#include "Widgets/SimpleTimerWindow.h"
 
 #include "GameList.h"
 
