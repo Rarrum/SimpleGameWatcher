@@ -4,6 +4,8 @@
 #include <QVBoxLayout>
 #include <QLabel>
 
+#include "ScaleableLabel.h"
+
 namespace
 {
     //TODO: switch back to std::format after clang/etc support it in LTS releases
@@ -58,16 +60,17 @@ NestedTimerWindow::NestedTimerWindow()
 
     nestedTimersLayout = new QGridLayout();
 
-    QSplitter *splitter = new QSplitter(Qt::Vertical);
     QWidget *nestedTimersLayoutHolder = new QWidget();
     nestedTimersLayoutHolder->setLayout(nestedTimersLayout);
-    splitter->addWidget(nestedTimersLayoutHolder);
-    splitter->addWidget(totalNumberDisplay);
-    splitter->setStretchFactor(0, 90);
-    splitter->setStretchFactor(1, 10);
+
+    QSplitter *bottomSplitter = new QSplitter(Qt::Vertical);
+    bottomSplitter->addWidget(nestedTimersLayoutHolder);
+    bottomSplitter->addWidget(totalNumberDisplay);
+    bottomSplitter->setStretchFactor(0, 88);
+    bottomSplitter->setStretchFactor(1, 12);
 
     QVBoxLayout *dummyMainLayout = new QVBoxLayout();
-    dummyMainLayout->addWidget(splitter);
+    dummyMainLayout->addWidget(bottomSplitter);
     setLayout(dummyMainLayout);
 
     ResetAllTimers();
@@ -111,6 +114,8 @@ void NestedTimerWindow::RefreshState()
 
 void NestedTimerWindow::AddNestedTimer(const std::string &name)
 {
+    resize(width(), height() + 35);
+
     int row = (int)nestedTimers.size();
 
     NestedTimer &nested = nestedTimers.emplace_back();
@@ -126,11 +131,14 @@ void NestedTimerWindow::AddNestedTimer(const std::string &name)
     nested.NumberDisplay->setSizePolicy(sizePolicy);
     nested.NumberDisplay->setVisible(false);
 
-    QLabel *label = new QLabel(QString::fromStdString(name));
-    label->setBuddy(nested.NumberDisplay);
+    nested.Label = new ScaleableLabel(name);
+    nested.Label->setMouseTracking(true); // for the resize cursor change to work correctly
+    nested.Label->setBuddy(nested.NumberDisplay);
+    nested.Label->FillFactor = 0.8f;
 
-    nestedTimersLayout->addWidget(label, row, 0);
+    nestedTimersLayout->addWidget(nested.Label, row, 0);
     nestedTimersLayout->addWidget(nested.NumberDisplay, row, 1);
+    nestedTimersLayout->setRowStretch(row, 1);
 }
 
 void NestedTimerWindow::SetActiveTimer(const std::string &name)
@@ -193,4 +201,32 @@ void NestedTimerWindow::mousePressEvent(QMouseEvent *event)
     }
     else
         DraggableQWidget::mousePressEvent(event);
+}
+
+void NestedTimerWindow::resizeEvent(QResizeEvent *event)
+{
+    setUpdatesEnabled(false);
+
+    DraggableQWidget::resizeEvent(event);
+
+    if (!nestedTimers.empty())
+    {
+        QRect layoutRect = nestedTimersLayout->geometry();
+        int heightPerRow = layoutRect.height() / ((int)nestedTimers.size() + 1);
+        int minColWidth = layoutRect.width() / 2 - 11 * 2;
+
+        if (heightPerRow > 2)
+        {
+            for (size_t i = 0; i < nestedTimers.size(); ++i)
+            {
+                nestedTimers[i].Label->setMaximumHeight(heightPerRow - 1);
+                nestedTimers[i].NumberDisplay->setMaximumHeight(heightPerRow - 1);
+
+                if (minColWidth > 5)
+                    nestedTimers[i].NumberDisplay->setMinimumWidth(minColWidth);
+            }
+        }
+    }
+
+    setUpdatesEnabled(true);
 }

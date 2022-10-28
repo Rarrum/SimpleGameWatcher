@@ -6,6 +6,7 @@
 
 #include "DraggableQWidget.h"
 #include "UpdatableGameWindow.h"
+#include "ScaleableLabel.h"
 
 #include <QLCDNumber>
 #include <QMenu>
@@ -28,6 +29,7 @@ public:
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     QAction *actionExit = nullptr;
@@ -48,6 +50,7 @@ private slots:
         bool Touched = false;
         std::chrono::steady_clock::time_point End;
 
+        ScaleableLabel *Label = nullptr;
         QLCDNumber *NumberDisplay = nullptr;
     };
 
