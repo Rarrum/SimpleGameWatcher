@@ -6,7 +6,7 @@
 class ScaleableLabel: public QLabel
 {
 public:
-    inline public ScaleableLabel(const std::string &text, QWidget *parent = nullptr): QLabel(QString::fromStdString(text), parent)
+    inline ScaleableLabel(const std::string &text, QWidget *parent = nullptr): QLabel(QString::fromStdString(text), parent)
     {
         setMinimumHeight(5);
 
