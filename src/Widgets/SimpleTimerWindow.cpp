@@ -147,7 +147,7 @@ void SimpleTimerWindow::ResetTimer()
     timerStart = timerEnd = std::chrono::steady_clock::now();
 }
 
-void SimpleTimerWindow::RefreshStateFromWatcher()
+void SimpleTimerWindow::RefreshState()
 {
     if (shouldStartCallback && shouldStartCallback())
         StartTimer();
@@ -157,4 +157,6 @@ void SimpleTimerWindow::RefreshStateFromWatcher()
 
     if (shouldResetCallback && shouldResetCallback())
         ResetTimer();
+
+    //NOTE: SimpleTimerWindow has its own timer callback for UI updates, since it might be used in manual mode without a game watcher
 }

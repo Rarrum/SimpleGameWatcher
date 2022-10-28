@@ -25,7 +25,7 @@ DebugGameStateWindow::DebugGameStateWindow(std::shared_ptr<GameWatcher> gameWatc
     show();
 }
 
-void DebugGameStateWindow::RefreshStateFromWatcher()
+void DebugGameStateWindow::RefreshState()
 {
     if (!watcher)
         return;

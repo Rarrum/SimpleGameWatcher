@@ -5,17 +5,20 @@
 #include <functional>
 
 #include "DraggableQWidget.h"
+#include "UpdatableGameWindow.h"
+#include "ScaleableLabel.h"
 
 #include <QLCDNumber>
 #include <QMenu>
 #include <QGridLayout>
 
-class NestedTimerWindow: public DraggableQWidget
+class NestedTimerWindow: public DraggableQWidget, public UpdatableGameWindow
 {
 public:
     NestedTimerWindow();
 
-    void RefreshState();
+    void RefreshState() override;
+    inline bool IsStillOpen() const override { return isVisible(); }
 
     void AddNestedTimer(const std::string &name);
     void SetActiveTimer(const std::string &name);
@@ -26,6 +29,7 @@ public:
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     QAction *actionExit = nullptr;
@@ -46,6 +50,7 @@ private slots:
         bool Touched = false;
         std::chrono::steady_clock::time_point End;
 
+        ScaleableLabel *Label = nullptr;
         QLCDNumber *NumberDisplay = nullptr;
     };
 

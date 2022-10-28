@@ -10,9 +10,10 @@
 #include <QTimer>
 
 #include "GameWatcher.h"
-#include "SimpleTimerWindow.h"
-#include "NestedTimerWindow.h"
-#include "DebugGameStateWindow.h"
+#include "Widgets/UpdatableGameWindow.h"
+#include "Widgets/SimpleTimerWindow.h"
+#include "Widgets/NestedTimerWindow.h"
+#include "Widgets/DebugGameStateWindow.h"
 
 struct GameSetupMode
 {
@@ -56,6 +57,5 @@ private:
     std::shared_ptr<GameWatcher> watcherToPoll;
 
     std::list<std::unique_ptr<DebugGameStateWindow>> allDebugWindows;
-    std::list<std::unique_ptr<SimpleTimerWindow>> allSimpleTimers;
-    std::list<std::unique_ptr<NestedTimerWindow>> allNestedTimers;
+    std::list<std::unique_ptr<UpdatableGameWindow>> allNormalWindows;
 };
