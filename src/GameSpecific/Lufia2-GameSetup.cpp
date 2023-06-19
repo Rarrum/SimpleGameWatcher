@@ -46,10 +46,13 @@ namespace
                     ramPatternsA.emplace_back(0x320, std::vector<uint8_t>{ 0x00, 0x00, 0xA8, 0x10, 0xB0, 0x29, 0xA8, 0x10, 0x0A, 0x28, 0xCC, 0x1C, 0x41, 0x04, 0xB0, 0x29 }); // Name Select
                     ramPatternsA.emplace_back(0x320, std::vector<uint8_t>{ 0x00, 0x00, 0x31, 0x4E, 0x43, 0x3C, 0x9C, 0x73, 0x00, 0x00, 0x9C, 0x73, 0x00, 0x00, 0x9C, 0x73 }); // Town and Ancient Cave
                     ramPatternsA.emplace_back(0x320, std::vector<uint8_t>{ 0x00, 0x00, 0x41, 0x51, 0x3A, 0x28, 0x56, 0x59, 0xA0, 0x2E, 0x39, 0x37, 0x0D, 0x63, 0xEF, 0x3D }); // Overworld
-                    std::vector<uint64_t> ramOffsets = FindAnyPatternOffsets(ramPatternsA, start, end);
+                    std::vector<uint64_t> initialRamOffsets = FindAnyPatternOffsets(ramPatternsA, start, end);
 
-                    if (ramOffsets.empty())
+                    if (initialRamOffsets.empty())
+                    {
+                        lastWarningForUser = "Memory pattern 1 not found";
                         return std::numeric_limits<uint64_t>::max();
+                    }
 
                     std::vector<MemorySearchPattern> ramPatternsB;
                     ramPatternsB.emplace_back(0x00, std::vector<uint8_t>{ 0x09, 0x53, 0x95, 0xF1, 0x00, 0x00, 0x00, 0x00 }); // Town (initially only)
@@ -57,21 +60,21 @@ namespace
                     ramPatternsB.emplace_back(0x19, std::vector<uint8_t>{ 0x2A, 0xA6, 0x7E, 0x29, 0xA6, 0x7E }); // Name Select and stuff (until menu opened)
                     ramPatternsB.emplace_back(0xEC, std::vector<uint8_t>{ 0x9E, 0x03, 0xB0, 0x9E, 0x00, 0x00, 0x00 }); // Cave
                     ramPatternsB.emplace_back(0xEC, std::vector<uint8_t>{ 0x9E, 0x08, 0xB0, 0x9E, 0x00, 0x00, 0x00 }); // Cave
-                    ramOffsets = FilterAdditionalAnyPatternOffsets(ramOffsets, ramPatternsB, start, end);
+                    std::vector<uint64_t> finalRamOffsets = FilterAdditionalAnyPatternOffsets(initialRamOffsets, ramPatternsB, start, end);
 
                     //TODO: maybe add UI for picking the right one so the user can select from options to try until they find the right one, if we can't find something more solid to do here?
 
-                    if (ramOffsets.empty())
+                    if (finalRamOffsets.empty())
                     {
-                        lastWarningForUser = "Memory pattern not found";
+                        lastWarningForUser = "Memory pattern 2 not found";
                         return std::numeric_limits<uint64_t>::max();
                     }
                     else
                     {
-                        if (ramOffsets.size() > 1)
+                        if (finalRamOffsets.size() > 1)
                             lastWarningForUser = "Too many memory patterns found";
 
-                        return ramOffsets[ramOffsets.size() / 2];
+                        return finalRamOffsets[finalRamOffsets.size() / 2];
                     }
                 }))
                     return;
