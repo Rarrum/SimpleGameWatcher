@@ -135,7 +135,7 @@ void PCProcessMemory::ScanMemory(std::function<bool(uint8_t *start, uint8_t *end
         uint64_t pageStart = (uint64_t)mbi.BaseAddress;
         uint64_t pageEnd = pageStart + mbi.RegionSize;
 
-        if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE && (mbi.Protect & PAGE_GUARD) != PAGE_GUARD)
+        if (mbi.State == MEM_COMMIT && (mbi.Type == MEM_PRIVATE || mbi.Type == MEM_IMAGE) && (mbi.Protect & PAGE_GUARD) != PAGE_GUARD)
         {
             //TODO: This would be faster if we could filter to just the heaps of the module in question - the windows APIs for heap traversing are super slow though, and just make this worse
 
