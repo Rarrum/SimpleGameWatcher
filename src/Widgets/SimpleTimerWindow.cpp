@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QObject>
+#include <QStyleOption>
+#include <QPainter>
 
 namespace
 {
@@ -23,16 +25,63 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
     resize(225, 50);
     setWindowTitle("Timer");
     setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    //setObjectName("SimpleTimerWindow");
+    //setAttribute(Qt::WA_TranslucentBackground, true);
+    //setStyleSheet("QWidget#SimpleTimerWindow {background-color: rgba(200, 200, 200, 2);}");
+    setAutoFillBackground(true);
 
     resizeBorder = 4;
 
-    actionExit = new QAction("Close Timer", this);
+    QAction *actionExit = new QAction("Close Timer", this);
     QObject::connect(actionExit, &QAction::triggered, [&]()
     {
         close();
     });
 
+    QAction *actionSetBgColor = new QAction("Set Background Color", this);
+    QObject::connect(actionSetBgColor, &QAction::triggered, [&]()
+    {
+        setAttribute(Qt::WA_TranslucentBackground, false);
+        //setStyleSheet("");
+
+        setAutoFillBackground(true);
+        QPalette pal = palette();
+        pal.setColor(QPalette::Base, Qt::yellow);
+        pal.setColor(QPalette::Window, Qt::yellow);
+        setPalette(pal);
+    });
+
+    QAction *actionSetBgTransparent = new QAction("Set Background Transparent", this);
+    QObject::connect(actionSetBgTransparent, &QAction::triggered, [&]()
+    {
+        setAttribute(Qt::WA_TranslucentBackground, true);
+        //setStyleSheet("QWidget#SimpleTimerWindow {background-color: rgba(200, 200, 200, 2);}");
+
+        setAttribute(Qt::WA_NoSystemBackground, false);
+
+        QPalette pal = palette();
+        QColor transparentColor(200, 200, 200, 2);
+        pal.setColor(QPalette::Base, transparentColor);
+        pal.setColor(QPalette::Window, transparentColor);
+        setPalette(pal);
+    });
+
+    QAction *actionSetBgDefault = new QAction("Set Background Default", this);
+    QObject::connect(actionSetBgDefault, &QAction::triggered, [&]()
+    {
+        setAttribute(Qt::WA_TranslucentBackground, false);
+        //setStyleSheet("");
+        //setStyle(nullptr);
+
+        setAutoFillBackground(true);
+        setPalette(QApplication::style()->standardPalette());
+    });
+
     contextMenu = new QMenu(this);
+    contextMenu->addAction(actionSetBgColor);
+    contextMenu->addAction(actionSetBgTransparent);
+    contextMenu->addAction(actionSetBgDefault);
+    contextMenu->addSeparator();
     contextMenu->addAction(actionExit);
 
     numberDisplay = new QLCDNumber(this);
@@ -108,6 +157,15 @@ void SimpleTimerWindow::mousePressEvent(QMouseEvent *event)
     }
     else
         DraggableQWidget::mousePressEvent(event);
+}
+
+void SimpleTimerWindow::paintEvent(QPaintEvent*)
+{
+    // weird hack, otherwise stylesheet selector doesn't work right
+    /*QStyleOption opt;
+    opt.init(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);*/
 }
 
 void SimpleTimerWindow::timerUpdate()

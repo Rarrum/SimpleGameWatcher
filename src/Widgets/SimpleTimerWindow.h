@@ -31,11 +31,11 @@ protected:
     void ResetTimer();
 
     void mousePressEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent*) override;
 
 private slots:
     void timerUpdate();
 
-    QAction *actionExit = nullptr;
     QMenu *contextMenu = nullptr;
 
     QLCDNumber *numberDisplay = nullptr;

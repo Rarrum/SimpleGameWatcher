@@ -111,7 +111,6 @@ protected:
 private:
     QPoint lastMousePos;
 
-
     bool hoverL = false;
     bool hoverR = false;
     bool hoverT = false;
