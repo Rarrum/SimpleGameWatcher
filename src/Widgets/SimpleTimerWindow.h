@@ -5,6 +5,7 @@
 
 #include "DraggableQWidget.h"
 #include "UpdatableGameWindow.h"
+#include "ColorChangerWidgetHelper.h"
 
 #include <QLCDNumber>
 #include <QMenu>
@@ -13,7 +14,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-class SimpleTimerWindow: public DraggableQWidget, public UpdatableGameWindow
+class SimpleTimerWindow: public DraggableQWidget, public UpdatableGameWindow, public ColorChangerWidgetHelper
 {
 public:
     SimpleTimerWindow(bool showControls);
@@ -35,7 +36,6 @@ protected:
 private slots:
     void timerUpdate();
 
-    QAction *actionExit = nullptr;
     QMenu *contextMenu = nullptr;
 
     QLCDNumber *numberDisplay = nullptr;

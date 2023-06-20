@@ -200,6 +200,30 @@ int main(int argc, char **argv)
     QGroupBox *gameSetupBox = new QGroupBox("Game Selection");
     gameSetupBox->setLayout(gameSelectLayout);
 
+    // layouts layout - coming soon?
+    /*
+    QGroupBox *loadSaveLayoutsBox = new QGroupBox("Window Layouts");
+    QHBoxLayout *loadSaveLayoutsLayout = new QHBoxLayout();
+
+    QPushButton *loadLayoutButton = new QPushButton(&window);
+    loadLayoutButton->setText("Load");
+    QObject::connect(loadLayoutButton, &QPushButton::clicked, [&]()
+    {
+        //TODO
+    });
+
+    QPushButton *saveLayoutButton = new QPushButton(&window);
+    saveLayoutButton->setText("Save");
+    QObject::connect(saveLayoutButton, &QPushButton::clicked, [&]()
+    {
+        //TODO
+    });
+
+    loadSaveLayoutsLayout->addWidget(loadLayoutButton);
+    loadSaveLayoutsLayout->addWidget(saveLayoutButton);
+    loadSaveLayoutsBox->setLayout(loadSaveLayoutsLayout);
+    */
+
     // main window layout
     QHBoxLayout *createButtonsLayout = new QHBoxLayout();
     createButtonsLayout->addWidget(manualBox);
@@ -208,6 +232,7 @@ int main(int argc, char **argv)
     QVBoxLayout *topLayout = new QVBoxLayout();
     topLayout->addWidget(gameSetupBox, 1);
     topLayout->addLayout(createButtonsLayout, 999);
+    //topLayout->addWidget(loadSaveLayoutsBox, 1); // soon?
 
     window.setLayout(topLayout);
     window.setWindowTitle("EasyAutoTracker");

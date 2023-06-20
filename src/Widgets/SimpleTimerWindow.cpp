@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QObject>
+#include <QStyleOption>
+#include <QColorDialog>
 
 namespace
 {
@@ -24,15 +26,19 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
     setWindowTitle("Timer");
     setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 
+    SetupColorChanger(this);
+
     resizeBorder = 4;
 
-    actionExit = new QAction("Close Timer", this);
+    QAction *actionExit = new QAction("Close Timer", this);
     QObject::connect(actionExit, &QAction::triggered, [&]()
     {
         close();
     });
 
     contextMenu = new QMenu(this);
+    AddColorOptionsToMenu(contextMenu, true, true);
+    contextMenu->addSeparator();
     contextMenu->addAction(actionExit);
 
     numberDisplay = new QLCDNumber(this);
@@ -92,6 +98,7 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
     }
 
     setLayout(mainLayout);
+    SetBackgroundTransparent();
     show();
 
     timerStart = timerEnd = std::chrono::steady_clock::now();
