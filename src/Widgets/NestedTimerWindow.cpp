@@ -42,7 +42,7 @@ NestedTimerWindow::NestedTimerWindow()
     setWindowTitle("Timer");
     setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 
-    SetupBackgroundChanger(this);
+    SetupColorChanger(this);
 
     resizeBorder = 4;
 
@@ -53,7 +53,7 @@ NestedTimerWindow::NestedTimerWindow()
     });
 
     contextMenu = new QMenu(this);
-    AddBackgroundOptionsToMenu(contextMenu);
+    AddColorOptionsToMenu(contextMenu, true, true);
     contextMenu->addSeparator();
     contextMenu->addAction(actionExit);
 
