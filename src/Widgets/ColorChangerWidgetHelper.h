@@ -48,7 +48,7 @@ public:
         widget->setAttribute(Qt::WA_NoSystemBackground, false);
 
         QPalette pal = widget->palette();
-        QColor transparentColor(200, 200, 200, 2); // We really want alpha to be 0, but that breaks mouse clicks for some reason.  Instead we get not-quite-transparent here...
+        QColor transparentColor(128, 128, 128, 2); // We really want alpha to be 0, but that breaks mouse clicks for some reason.  Instead we get not-quite-transparent here...
         pal.setColor(QPalette::Window, transparentColor);
         widget->setPalette(pal);
     }
