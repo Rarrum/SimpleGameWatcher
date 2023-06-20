@@ -78,7 +78,6 @@ NestedTimerWindow::NestedTimerWindow()
     setLayout(dummyMainLayout);
 
     ResetAllTimers();
-    SetBackgroundTransparent();
     show();
 }
 
