@@ -7,12 +7,13 @@
 #include "DraggableQWidget.h"
 #include "UpdatableGameWindow.h"
 #include "ScaleableLabel.h"
+#include "BackgroundChangerWidgetHelper.h"
 
 #include <QLCDNumber>
 #include <QMenu>
 #include <QGridLayout>
 
-class NestedTimerWindow: public DraggableQWidget, public UpdatableGameWindow
+class NestedTimerWindow: public DraggableQWidget, public UpdatableGameWindow, public BackgroundChangerWidgetHelper
 {
 public:
     NestedTimerWindow();

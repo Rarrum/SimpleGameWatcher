@@ -5,6 +5,7 @@
 
 #include "DraggableQWidget.h"
 #include "UpdatableGameWindow.h"
+#include "BackgroundChangerWidgetHelper.h"
 
 #include <QLCDNumber>
 #include <QMenu>
@@ -13,7 +14,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-class SimpleTimerWindow: public DraggableQWidget, public UpdatableGameWindow
+class SimpleTimerWindow: public DraggableQWidget, public UpdatableGameWindow, public BackgroundChangerWidgetHelper
 {
 public:
     SimpleTimerWindow(bool showControls);

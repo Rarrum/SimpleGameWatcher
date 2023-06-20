@@ -42,6 +42,8 @@ NestedTimerWindow::NestedTimerWindow()
     setWindowTitle("Timer");
     setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 
+    SetupBackgroundChanger(this);
+
     resizeBorder = 4;
 
     actionExit = new QAction("Close Timer", this);
@@ -51,6 +53,8 @@ NestedTimerWindow::NestedTimerWindow()
     });
 
     contextMenu = new QMenu(this);
+    AddBackgroundOptionsToMenu(contextMenu);
+    contextMenu->addSeparator();
     contextMenu->addAction(actionExit);
 
     totalNumberDisplay = new QLCDNumber();
@@ -74,6 +78,7 @@ NestedTimerWindow::NestedTimerWindow()
     setLayout(dummyMainLayout);
 
     ResetAllTimers();
+    SetBackgroundTransparent();
     show();
 }
 

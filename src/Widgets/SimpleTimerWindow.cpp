@@ -25,7 +25,8 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
     resize(225, 50);
     setWindowTitle("Timer");
     setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-    setAutoFillBackground(true);
+
+    SetupBackgroundChanger(this);
 
     resizeBorder = 4;
 
@@ -35,50 +36,8 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
         close();
     });
 
-    QAction *actionSetBgColor = new QAction("Set Background Color", this);
-    QObject::connect(actionSetBgColor, &QAction::triggered, [&]()
-    {
-        setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
-        show();
-        QColor color = QColorDialog::getColor();
-        setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
-        show();
-
-        if (color.isValid())
-        {
-            setAttribute(Qt::WA_TranslucentBackground, false);
-            setAutoFillBackground(true);
-            QPalette pal = palette();
-            pal.setColor(QPalette::Window, color);
-            setPalette(pal);
-        }
-    });
-
-    QAction *actionSetBgTransparent = new QAction("Set Background Transparent", this);
-    QObject::connect(actionSetBgTransparent, &QAction::triggered, [&]()
-    {
-        setAttribute(Qt::WA_TranslucentBackground, true);
-        setAttribute(Qt::WA_NoSystemBackground, false);
-
-        QPalette pal = palette();
-        QColor transparentColor(200, 200, 200, 2);
-        pal.setColor(QPalette::Window, transparentColor);
-        setPalette(pal);
-    });
-
-    QAction *actionSetBgDefault = new QAction("Set Background Default", this);
-    QObject::connect(actionSetBgDefault, &QAction::triggered, [&]()
-    {
-        setAttribute(Qt::WA_TranslucentBackground, false);
-
-        setAutoFillBackground(true);
-        setPalette(QApplication::style()->standardPalette());
-    });
-
     contextMenu = new QMenu(this);
-    contextMenu->addAction(actionSetBgColor);
-    contextMenu->addAction(actionSetBgTransparent);
-    contextMenu->addAction(actionSetBgDefault);
+    AddBackgroundOptionsToMenu(contextMenu);
     contextMenu->addSeparator();
     contextMenu->addAction(actionExit);
 
@@ -139,6 +98,7 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
     }
 
     setLayout(mainLayout);
+    SetBackgroundTransparent();
     show();
 
     timerStart = timerEnd = std::chrono::steady_clock::now();
