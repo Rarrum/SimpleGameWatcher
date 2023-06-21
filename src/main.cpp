@@ -144,6 +144,9 @@ int main(int argc, char **argv)
         activateGameButton->setText("Stop Auto And Reset");
         comboGameSelect->setEnabled(false);
 
+        activeGameStatusLabel->setText("Starting scan...");
+        activeGameStatusLabel->setStyleSheet("QLabel { color : blue; }");
+
         activeGame->OnWatcherUpdate = [&]()
         {
             bool isReady = activeGame->Watcher() && activeGame->Watcher()->IsReady();
