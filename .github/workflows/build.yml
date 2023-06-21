@@ -58,7 +58,10 @@ jobs:
         dest: buildZipped\\EasyAutoTracker-Linux.zip
 
   create_release:
-    - name: Create draft Release
+    name: Setup Release
+
+    steps:
+    - name: Create Draft Release
       uses: softprops/action-gh-release@v1
       with:
         draft: true
