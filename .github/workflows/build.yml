@@ -7,12 +7,11 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [windows-2022]
-#TODO: Figure out how to get a newer clang version installed, then re-add linux:    os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - name: setup xmake
-      uses: xmake-io/github-action-setup-xmake@v1.0.13
+      uses: xmake-io/github-action-setup-xmake@v1
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
@@ -31,28 +30,66 @@ jobs:
         xmake install -o buildMerged
 
     - name: Remove Uneccesary Qt Stuff 1
+      if: matrix.os == 'windows-latest'
       uses: JesseTG/rm@v1.0.0
       with:
         path: buildMerged\\bin\\vc_redist.x64.exe
 
     - name: Remove Uneccesary Qt Stuff 2
+      if: matrix.os == 'windows-latest'
       uses: JesseTG/rm@v1.0.0
       with:
         path: buildMerged\\bin\\opengl32sw.dll
-   
-    - name: Zip Windows Release   
+
+    - name: Zip Windows Release
+      if: matrix.os == 'windows-latest'
       uses: vimtor/action-zip@v1
       with:
         files: buildMerged\\bin
         recursive: true
         dest: buildZipped\\EasyAutoTracker-Windows.zip
-   
-    - name: Create draft Release
+
+    - name: Zip Linux Release
+      if: matrix.os == 'ubuntu-latest'
+      uses: vimtor/action-zip@v1
+      with:
+        files: buildMerged/bin
+        recursive: true
+        dest: buildZipped/EasyAutoTracker-Linux.zip
+
+    - name: Upload Windows Artifact
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: files
+        path: buildZipped\\EasyAutoTracker-Windows.zip
+
+    - name: Upload Linux Artifact
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: files
+        path: buildZipped/EasyAutoTracker-Linux.zip
+
+  create_release:
+    name: Setup Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download Artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: files
+
+    - name: Create Draft Release
       uses: softprops/action-gh-release@v1
       with:
         draft: true
         prerelease: true
         name: v0.0.0 NEW DRAFT RELEASE
         generate_release_notes: true
-        files: buildZipped\\EasyAutoTracker-Windows.zip
-      
+        files: |
+          EasyAutoTracker-Windows.zip
+          EasyAutoTracker-Linux.zip
+
