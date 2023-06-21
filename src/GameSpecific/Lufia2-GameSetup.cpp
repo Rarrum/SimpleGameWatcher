@@ -129,7 +129,7 @@ Lufia2GameSetup::Lufia2GameSetup()
     {
         std::vector<std::tuple<int, std::string>> allEntries;
         for (int i = 10; i < 100; i += 10)
-            allEntries.emplace_back(std::tuple{i, std::to_string(i)});
+            allEntries.emplace_back(std::tuple{i, "Floor " + std::to_string(i)});
 
         CreateTimerForFloorSets(allEntries);
     });
