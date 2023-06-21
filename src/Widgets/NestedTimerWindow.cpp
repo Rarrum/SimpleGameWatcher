@@ -157,11 +157,27 @@ void NestedTimerWindow::SetActiveTimer(const std::string &name)
     {
         if (nested.Name == name)
         {
+            if (!nested.Activated)
+            {
+                QFont font = nested.Label->font();
+                font.setWeight(QFont::Weight::Bold);
+                nested.Label->setFont(font);
+            }
+
             nested.Activated = true;
             nested.Touched = true;
         }
         else
+        {
+            if (nested.Activated)
+            {
+                QFont font = nested.Label->font();
+                font.setWeight(QFont::Weight::Normal);
+                nested.Label->setFont(font);
+            }
+
             nested.Activated = false;
+        }
     }
 }
 
