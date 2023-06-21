@@ -125,7 +125,7 @@ Lufia2GameSetup::Lufia2GameSetup()
         timer->SetResetCheck([=]() { return watcher->ShouldTriggerReset(); });
     });
 
-    allModes.emplace_back("Ancient Cave - Every 10 Floors", [&, this]()
+    allModes.emplace_back("Ancient Cave - Every 10 Floors", [this]()
     {
         std::vector<std::tuple<int, std::string>> allEntries;
         for (int i = 10; i < 100; i += 10)
