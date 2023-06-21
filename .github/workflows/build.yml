@@ -7,8 +7,7 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [windows-2022]
-#TODO: Figure out how to get a newer clang version installed, then re-add linux:    os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - name: setup xmake
@@ -31,22 +30,33 @@ jobs:
         xmake install -o buildMerged
 
     - name: Remove Uneccesary Qt Stuff 1
+      if: matrix.os == 'windows-latest'
       uses: JesseTG/rm@v1.0.0
       with:
         path: buildMerged\\bin\\vc_redist.x64.exe
 
     - name: Remove Uneccesary Qt Stuff 2
+      if: matrix.os == 'windows-latest'
       uses: JesseTG/rm@v1.0.0
       with:
         path: buildMerged\\bin\\opengl32sw.dll
-   
-    - name: Zip Windows Release   
+
+    - name: Zip Windows Release
+      if: matrix.os == 'windows-latest'
       uses: vimtor/action-zip@v1
       with:
         files: buildMerged\\bin
         recursive: true
         dest: buildZipped\\EasyAutoTracker-Windows.zip
-   
+
+    - name: Zip Linux Release
+      if: matrix.os == 'ubuntu-latest'
+      uses: vimtor/action-zip@v1
+      with:
+        files: buildMerged\\bin
+        recursive: true
+        dest: buildZipped\\EasyAutoTracker-Linux.zip
+
     - name: Create draft Release
       uses: softprops/action-gh-release@v1
       with:
@@ -54,5 +64,5 @@ jobs:
         prerelease: true
         name: v0.0.0 NEW DRAFT RELEASE
         generate_release_notes: true
-        files: buildZipped\\EasyAutoTracker-Windows.zip
-      
+        files: [buildZipped\\EasyAutoTracker-Windows.zip, buildZipped\\EasyAutoTracker-Linux.zip]
+
