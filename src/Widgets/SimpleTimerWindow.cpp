@@ -98,6 +98,7 @@ SimpleTimerWindow::SimpleTimerWindow(bool showControls)
     }
 
     setLayout(mainLayout);
+    SetBackgroundTransparent();
     show();
 
     timerStart = timerEnd = std::chrono::steady_clock::now();
