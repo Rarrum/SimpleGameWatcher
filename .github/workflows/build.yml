@@ -53,9 +53,9 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: vimtor/action-zip@v1
       with:
-        files: buildMerged\\bin
+        files: buildMerged/bin
         recursive: true
-        dest: buildZipped\\EasyAutoTracker-Linux.zip
+        dest: buildZipped/EasyAutoTracker-Linux.zip
 
     - name: Upload Windows Artifact
       if: matrix.os == 'windows-latest'
@@ -69,7 +69,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: files
-        path: buildZipped\\EasyAutoTracker-Linux.zip
+        path: buildZipped/EasyAutoTracker-Linux.zip
 
   create_release:
     name: Setup Release
@@ -90,6 +90,6 @@ jobs:
         name: v0.0.0 NEW DRAFT RELEASE
         generate_release_notes: true
         files: |
-          buildZipped\\EasyAutoTracker-Windows.zip
-          buildZipped\\EasyAutoTracker-Linux.zip
+          buildZipped/EasyAutoTracker-Windows.zip
+          buildZipped/EasyAutoTracker-Linux.zip
 
