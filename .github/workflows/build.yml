@@ -59,6 +59,7 @@ jobs:
 
   create_release:
     name: Setup Release
+    runs-on: ubuntu-latest
 
     steps:
     - name: Create Draft Release
