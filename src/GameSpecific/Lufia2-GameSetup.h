@@ -19,5 +19,5 @@ protected:
 private:
     std::vector<GameSetupMode> allModes;
 
-    void CreateTimerForFloorSets(const std::vector<std::tuple<int, std::string>> &floorSets);
+    void CreateTimerForFloorSets(const std::vector<std::tuple<int, int, std::string>> &floorSets);
 };

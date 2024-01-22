@@ -33,7 +33,11 @@ namespace
             displayString += "." + FormatDigits(msDigit / 100, 1);
 
         numberDisplay->setDigitCount((int)displayString.size());
-        numberDisplay->display(QString::fromStdString(displayString));
+
+        if (totalMilliseconds != 0)
+            numberDisplay->display(QString::fromStdString(displayString));
+        else
+            numberDisplay->display(QString());
     }
 }
 
@@ -157,26 +161,41 @@ void NestedTimerWindow::SetActiveTimer(const std::string &name)
     {
         if (nested.Name == name)
         {
-            if (!nested.Activated)
+            nested.Activated = true;
+            nested.Touched = true;
+        }
+        else
+        {
+            nested.Activated = false;
+        }
+    }
+}
+
+void NestedTimerWindow::SetFocusTimer(const std::string &name)
+{
+    for (NestedTimer &nested : nestedTimers)
+    {
+        if (nested.Name == name)
+        {
+            if (!nested.Focused)
             {
                 QFont font = nested.Label->font();
                 font.setWeight(QFont::Weight::Bold);
                 nested.Label->setFont(font);
             }
 
-            nested.Activated = true;
-            nested.Touched = true;
+            nested.Focused = true;
         }
         else
         {
-            if (nested.Activated)
+            if (nested.Focused)
             {
                 QFont font = nested.Label->font();
                 font.setWeight(QFont::Weight::Normal);
                 nested.Label->setFont(font);
             }
 
-            nested.Activated = false;
+            nested.Focused = false;
         }
     }
 }
@@ -205,10 +224,13 @@ void NestedTimerWindow::ResetAllTimers()
     isTimerActivated = false;
     totalTimerStart = totalTimerEnd = now;
 
+    SetFocusTimer(""); // clear's currently bolded timer
+
     for (NestedTimer &nested : nestedTimers)
     {
         nested.End = now;
         nested.Activated = false;
+        nested.Focused = false;
         nested.Touched = false;
     }
 }

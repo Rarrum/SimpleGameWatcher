@@ -127,23 +127,23 @@ Lufia2GameSetup::Lufia2GameSetup()
 
     allModes.emplace_back("Ancient Cave - Every 10 Floors", [this]()
     {
-        std::vector<std::tuple<int, std::string>> allEntries;
+        std::vector<std::tuple<int, int, std::string>> allEntries;
         for (int i = 10; i < 100; i += 10)
-            allEntries.emplace_back(std::tuple{i, "Floor " + std::to_string(i)});
+            allEntries.emplace_back(std::tuple{i - 9, i, "Floor " + std::to_string(i)});
 
         CreateTimerForFloorSets(allEntries);
     });
 
     allModes.emplace_back("Ancient Cave - Cores and Archfiends", [this]()
     {
-        std::vector<std::tuple<int, std::string>> allEntries =
+        std::vector<std::tuple<int, int, std::string>> allEntries =
         {
-            {14, "Red Cores\r\n(11-13)"},
-            {35, "Blue Cores\r\n(32-34)"},
-            {44, "Green Cores\r\n(41-43)"},
-            {61, "No Cores\r\n(58-60)"},
-            {88, "Archfiends\r\n(72-87)"},
-            {101, "Jelly Kill"}
+            {11, 13, "Red Cores\r\n(11-13)"},
+            {32, 34, "Blue Cores\r\n(32-34)"},
+            {41, 43, "Green Cores\r\n(41-43)"},
+            {58, 60, "No Cores\r\n(58-60)"},
+            {72, 87, "Archfiends\r\n(72-87)"},
+            {99, 99, "Jelly Kill"}
         };
 
         CreateTimerForFloorSets(allEntries);
@@ -151,26 +151,26 @@ Lufia2GameSetup::Lufia2GameSetup()
 
     allModes.emplace_back("Ancient Cave - Many Notable Enemies", [this]()
     {
-        std::vector<std::tuple<int, std::string>> allEntries =
+        std::vector<std::tuple<int, int, std::string>> allEntries =
         {
-            {10, "Red Mimics\r\n(7-9)"},
-            {14, "Red Cores\r\n(11-13)"},
-            {32, "Blue Mimics\r\n(29-31)"},
-            {35, "Blue Cores\r\n(32-34)"},
-            {40, "Assassins\r\n(37-39)"},
-            {44, "Green Cores\r\n(41-43)"},
-            {47, "Ninjas\r\n(44-46)"},
-            {61, "No Cores\r\n(58-60)"},
-            {69, "Gold Golems\r\n(64-68)"},
-            {88, "Archfiends\r\n(72-87)"},
-            {101, "Jelly Kill"}
+            {7,  9,  "Red Mimics\r\n(7-9)"},
+            {11, 13, "Red Cores\r\n(11-13)"},
+            {29, 31, "Blue Mimics\r\n(29-31)"},
+            {32, 34, "Blue Cores\r\n(32-34)"},
+            {37, 39, "Assassins\r\n(37-39)"},
+            {41, 43, "Green Cores\r\n(41-43)"},
+            {44, 46, "Ninjas\r\n(44-46)"},
+            {58, 60, "No Cores\r\n(58-60)"},
+            {64, 68, "Gold Golems\r\n(64-68)"},
+            {72, 87, "Archfiends\r\n(72-87)"},
+            {99, 99, "Jelly Kill"}
         };
 
         CreateTimerForFloorSets(allEntries);
     });
 }
 
-void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, std::string>> &floorSets)
+void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, int, std::string>> &floorSets)
 {
     if (floorSets.empty())
         return;
@@ -178,13 +178,13 @@ void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, 
     std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
     NestedTimerWindow *timer = CreateNestedTimer();
 
-    for (const auto& [floorNumber, floorName] : floorSets)
+    for (const auto& [floorNumberMin, floorNumberMax, floorName] : floorSets)
         timer->AddNestedTimer(floorName);
 
     timer->OnRefresh = [=]()
     {
         if (watcher->ShouldTriggerStart())
-            timer->SetActiveTimer(std::get<1>(floorSets[0]));
+            timer->SetActiveTimer(std::get<2>(floorSets[0]));
         else if (watcher->ShouldTriggerStop())
             timer->StopAllTimers();
         else if (watcher->ShouldTriggerReset())
@@ -193,14 +193,28 @@ void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, 
         {
             int currentFloor = watcher->GetIntegerValue("Floor");
 
-            for (size_t i = 0; i < floorSets.size() - 1; ++i)
+            std::string targetTimerToActivate;
+            std::string targetTimerToFocus;
+            for (size_t i = 0; i < floorSets.size(); ++i)
             {
-                const auto& [floorNumber, floorName] = floorSets[i];
-                const auto& [floorNumberNext, floorNameNext] = floorSets[i + 1];
+                const auto& [floorNumberMin, floorNumberMax, floorName] = floorSets[i];
+                
+                if (i < floorSets.size() - 1)
+                {
+                    const auto& [floorNumberNextMin, floorNumberNextMax, floorNameNext] = floorSets[i + 1];
 
-                if (currentFloor == floorNumber)
-                    timer->SetActiveTimer(floorNameNext);
+                    if (currentFloor > floorNumberMax)
+                        targetTimerToActivate = floorNameNext;
+                }
+                
+                if (currentFloor >= floorNumberMin && currentFloor <= floorNumberMax)
+                    targetTimerToFocus = floorName;
             }
+
+            if (!targetTimerToActivate.empty())
+                timer->SetActiveTimer(targetTimerToActivate);
+
+            timer->SetFocusTimer(targetTimerToFocus);
         }
     };
 }

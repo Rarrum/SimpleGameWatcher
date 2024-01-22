@@ -23,6 +23,7 @@ public:
 
     void AddNestedTimer(const std::string &name);
     void SetActiveTimer(const std::string &name);
+    void SetFocusTimer(const std::string &name);
     void StopAllTimers();
     void ResetAllTimers();
 
@@ -48,6 +49,7 @@ private slots:
     {
         std::string Name;
         bool Activated = false;
+        bool Focused = false;
         bool Touched = false;
         std::chrono::steady_clock::time_point End;
 
