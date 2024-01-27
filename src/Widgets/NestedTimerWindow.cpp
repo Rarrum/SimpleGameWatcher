@@ -62,7 +62,6 @@ NestedTimerWindow::NestedTimerWindow()
     contextMenu->addAction(actionExit);
 
     totalNumberDisplay = new QLCDNumber();
-    totalNumberDisplay->setMouseTracking(true); // for the resize cursor change to work correctly
     SetTimerDisplayValue(totalNumberDisplay, 0, true);
     totalNumberDisplay->setMinimumHeight(25);
 
@@ -80,6 +79,10 @@ NestedTimerWindow::NestedTimerWindow()
     QVBoxLayout *dummyMainLayout = new QVBoxLayout();
     dummyMainLayout->addWidget(bottomSplitter);
     setLayout(dummyMainLayout);
+
+    // setMouseTracking must be explicitly set on all children for it to actually work as expected
+    for (QWidget *child : findChildren<QWidget*>())
+        child->setMouseTracking(true);
 
     ResetAllTimers();
     show();
