@@ -17,4 +17,3 @@ TODO (The initial build only supports Lufia 2's Ancient Cave, run in various sne
 - Memory scanning sometimes runs into false positives (using an emulator's cheat memory search or save states might trigger this).  If you run into this, try restarting the emulator.
 - On linux, scanning doesn't work until the user runs "sudo setcap cap_sys_ptrace=eip EasyAutoTracker" on the executable - need to automate setting this somehow.
 - High CPU usage and UI lag if an emulator is running and we're actively searching for a game whose memory patterns have not been found yet in the emulator.
-- Sometimes the mouse cursor gets stuck in resize mode when resizing windows.  Hovering back over the resize border usually fixes this.
