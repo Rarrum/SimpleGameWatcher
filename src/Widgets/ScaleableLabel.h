@@ -19,12 +19,11 @@ public:
 
     float FillFactor = 1.0f;
 
-    inline int ScaleToFit()
+    inline void ChangeAndScaleFont(QFont newFont)
     {
         if (text().isEmpty())
-            return font().pixelSize();
+            return;
 
-        QFont newFont = font();
         QRect labelRect = contentsRect();
         labelRect.setHeight((int)(FillFactor * labelRect.height() / linesOfText));
 
@@ -37,14 +36,14 @@ public:
 
         QRect textRect = QFontMetrics(newFont).boundingRect(text());
 
-        if (textRect.height() < labelRect.height())
+        if (textRect.height() < labelRect.height() && textRect.width() < labelRect.width())
         {
             while (fontSize < 100)
             {
                 ++fontSize;
                 newFont.setPixelSize(fontSize);
                 textRect = QFontMetrics(newFont).boundingRect(text());
-                if (textRect.height() > labelRect.height())
+                if (textRect.height() > labelRect.height() || textRect.width() > labelRect.width())
                 {
                     --fontSize;
                     newFont.setPixelSize(fontSize);
@@ -52,28 +51,27 @@ public:
                 }
             }
         }
-        else if (textRect.height() > labelRect.height())
+        else if (textRect.height() > labelRect.height() || textRect.width() > labelRect.width())
         {
             while (fontSize > 5)
             {
                 --fontSize;
                 newFont.setPixelSize(fontSize);
                 textRect = QFontMetrics(newFont).boundingRect(text());
-                if (textRect.height() < labelRect.height())
+                if (textRect.height() < labelRect.height() && textRect.width() < labelRect.width())
                     break;
             }
         }
 
         setFont(newFont);
-        return fontSize;
     }
 
 protected:
     inline void resizeEvent(QResizeEvent *event) override
     {
-        ScaleToFit();
+        ChangeAndScaleFont(font());
 
-        QLabel:: resizeEvent(event);
+        QLabel::resizeEvent(event);
     }
 
 private:

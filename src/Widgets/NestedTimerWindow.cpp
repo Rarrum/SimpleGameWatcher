@@ -18,7 +18,7 @@ namespace
         return formatted;
     }
 
-    void SetTimerDisplayValue(QLCDNumber *numberDisplay, int64_t totalMilliseconds, bool showMilliseconds)
+    void SetTimerDisplayValue(QLCDNumber *numberDisplay, int64_t totalMilliseconds, bool showMilliseconds, bool alwaysShow = false)
     {
         if (totalMilliseconds < 0)
             totalMilliseconds = 0;
@@ -34,10 +34,8 @@ namespace
 
         numberDisplay->setDigitCount((int)displayString.size());
 
-        if (totalMilliseconds != 0)
-            numberDisplay->display(QString::fromStdString(displayString));
-        else
-            numberDisplay->display(QString());
+        numberDisplay->display(QString::fromStdString(displayString));
+        numberDisplay->setVisible(alwaysShow || totalMilliseconds != 0);
     }
 }
 
@@ -49,6 +47,8 @@ NestedTimerWindow::NestedTimerWindow()
     SetupColorChanger(this);
 
     resizeBorder = 4;
+
+    setContentsMargins(1, 1, 1, 1);
 
     actionExit = new QAction("Close Timer", this);
     QObject::connect(actionExit, &QAction::triggered, [&]()
@@ -62,10 +62,11 @@ NestedTimerWindow::NestedTimerWindow()
     contextMenu->addAction(actionExit);
 
     totalNumberDisplay = new QLCDNumber();
-    SetTimerDisplayValue(totalNumberDisplay, 0, true);
+    SetTimerDisplayValue(totalNumberDisplay, 0, true, true);
     totalNumberDisplay->setMinimumHeight(25);
 
     nestedTimersLayout = new QGridLayout();
+    nestedTimersLayout->setVerticalSpacing(1);
 
     QWidget *nestedTimersLayoutHolder = new QWidget();
     nestedTimersLayoutHolder->setLayout(nestedTimersLayout);
@@ -77,8 +78,11 @@ NestedTimerWindow::NestedTimerWindow()
     bottomSplitter->setStretchFactor(1, 12);
 
     QVBoxLayout *dummyMainLayout = new QVBoxLayout();
+    dummyMainLayout->setContentsMargins(1, 1, 1, 1); // gets our controls closer to the edge - TODO: investigate run-time setGeometry warning caused by this
     dummyMainLayout->addWidget(bottomSplitter);
     setLayout(dummyMainLayout);
+
+    resize(200, 200);
 
     // setMouseTracking must be explicitly set on all children for it to actually work as expected
     for (QWidget *child : findChildren<QWidget*>())
@@ -106,7 +110,7 @@ void NestedTimerWindow::RefreshState()
     }
 
     int64_t totalMsSinceStart = std::chrono::duration_cast<std::chrono::milliseconds>(totalTimerEnd - totalTimerStart).count();
-    SetTimerDisplayValue(totalNumberDisplay, totalMsSinceStart, true);
+    SetTimerDisplayValue(totalNumberDisplay, totalMsSinceStart, true, true);
 
     for (NestedTimer &nested : nestedTimers)
     {
@@ -125,7 +129,7 @@ void NestedTimerWindow::RefreshState()
 
 void NestedTimerWindow::AddNestedTimer(const std::string &name)
 {
-    resize(width(), height() + 35);
+    resize(width(), height() + 40);
 
     int row = (int)nestedTimers.size();
 
@@ -146,6 +150,8 @@ void NestedTimerWindow::AddNestedTimer(const std::string &name)
     nested.Label->setMouseTracking(true); // for the resize cursor change to work correctly
     nested.Label->setBuddy(nested.NumberDisplay);
     nested.Label->FillFactor = 0.8f;
+
+    //nested.Label->setFrameShape(QFrame::Box); // useful for debugging layout
 
     nestedTimersLayout->addWidget(nested.Label, row, 0);
     nestedTimersLayout->addWidget(nested.NumberDisplay, row, 1);
@@ -184,7 +190,7 @@ void NestedTimerWindow::SetFocusTimer(const std::string &name)
             {
                 QFont font = nested.Label->font();
                 font.setWeight(QFont::Weight::Bold);
-                nested.Label->setFont(font);
+                nested.Label->ChangeAndScaleFont(font);
             }
 
             nested.Focused = true;
@@ -195,7 +201,7 @@ void NestedTimerWindow::SetFocusTimer(const std::string &name)
             {
                 QFont font = nested.Label->font();
                 font.setWeight(QFont::Weight::Normal);
-                nested.Label->setFont(font);
+                nested.Label->ChangeAndScaleFont(font);
             }
 
             nested.Focused = false;
@@ -256,21 +262,25 @@ void NestedTimerWindow::resizeEvent(QResizeEvent *event)
 
     if (!nestedTimers.empty())
     {
+        // Resize all timers to take up the same space
         QRect layoutRect = nestedTimersLayout->geometry();
         int heightPerRow = layoutRect.height() / ((int)nestedTimers.size() + 1);
         int minColWidth = layoutRect.width() / 2 - 11 * 2;
 
         if (heightPerRow > 2)
         {
-            for (size_t i = 0; i < nestedTimers.size(); ++i)
+            for (NestedTimer &nested : nestedTimers)
             {
-                nestedTimers[i].Label->setMaximumHeight(heightPerRow - 1);
-                nestedTimers[i].NumberDisplay->setMaximumHeight(heightPerRow - 1);
+                nested.Label->setMaximumHeight(heightPerRow - 1);
+                nested.NumberDisplay->setMaximumHeight(heightPerRow - 1);
 
+                nested.Label->setMaximumWidth(layoutRect.width() / 2);
                 if (minColWidth > 5)
-                    nestedTimers[i].NumberDisplay->setMinimumWidth(minColWidth);
+                    nested.NumberDisplay->setMinimumWidth(minColWidth);
             }
         }
+
+        //TODO: we would like the labels to all use the same font size, but we can't just change it here, since ChangeAndScaleFont will clobber it
     }
 
     setUpdatesEnabled(true);
