@@ -19,7 +19,7 @@ namespace
 
         bool ShouldTriggerStart()
         {
-            return (GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik");
+            return !hasFinishedJelly && ((GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik"));
         }
 
         bool ShouldTriggerStop()
@@ -30,6 +30,11 @@ namespace
         bool ShouldTriggerReset()
         {
             return GetIntegerValue("Floor") != 99 && (GetFlagValue("OnTitleMenu") || (GetFlagValue("OnNameSelect") && !GetFlagValue("ScreenFading")));
+        }
+
+        bool CheckForFloorChanges()
+        {
+            return !hasFinishedJelly;
         }
 
     protected:
@@ -107,10 +112,18 @@ namespace
             uint8_t blobAnimationState = ram.ReadInteger<uint8_t>(0x421d); // also has other values outside of the blob fight sometimes
             SetIntegerState("BlobAnimationState", blobAnimationState);
             SetFlagState("BlobDeathAnimation", blobAnimationState == 31);
+
+            // a small amount of state management
+            if (ShouldTriggerReset())
+                hasFinishedJelly = false;
+            else if (ShouldTriggerStop())
+                hasFinishedJelly = true;
         }
 
     private:
         SnesMemory snes;
+
+        bool hasFinishedJelly = false;
     };
 }
 
@@ -189,7 +202,7 @@ void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, 
             timer->StopAllTimers();
         else if (watcher->ShouldTriggerReset())
             timer->ResetAllTimers();
-        else
+        else if (watcher->CheckForFloorChanges())
         {
             int currentFloor = watcher->GetIntegerValue("Floor");
 
@@ -198,7 +211,7 @@ void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, 
             for (size_t i = 0; i < floorSets.size(); ++i)
             {
                 const auto& [floorNumberMin, floorNumberMax, floorName] = floorSets[i];
-                
+
                 if (i < floorSets.size() - 1)
                 {
                     const auto& [floorNumberNextMin, floorNumberNextMax, floorNameNext] = floorSets[i + 1];
@@ -206,7 +219,7 @@ void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, 
                     if (currentFloor > floorNumberMax)
                         targetTimerToActivate = floorNameNext;
                 }
-                
+
                 if (currentFloor >= floorNumberMin && currentFloor <= floorNumberMax)
                     targetTimerToFocus = floorName;
             }
