@@ -132,6 +132,12 @@ void SimpleTimerWindow::timerUpdate()
     numberDisplay->display(QString::fromStdString(displayString));
 }
 
+void SimpleTimerWindow::SetCurrentTime(uint64_t totalMilliseconds)
+{
+    timerEnd = std::chrono::steady_clock::now();
+    timerStart = timerEnd - std::chrono::milliseconds(totalMilliseconds);
+}
+
 void SimpleTimerWindow::StartTimer()
 {
     if (!timerStarted)
@@ -155,6 +161,9 @@ void SimpleTimerWindow::ResetTimer()
 
 void SimpleTimerWindow::RefreshState()
 {
+    if (OnRefresh)
+        OnRefresh();
+
     if (shouldStartCallback && shouldStartCallback())
         StartTimer();
 

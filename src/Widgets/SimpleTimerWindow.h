@@ -22,6 +22,9 @@ public:
     inline void SetStartCheck(std::function<bool()> shouldStart) { shouldStartCallback = shouldStart; }
     inline void SetStopCheck(std::function<bool()> shouldStop) { shouldStopCallback = shouldStop; }
     inline void SetResetCheck(std::function<bool()> shouldReset) { shouldResetCallback = shouldReset; }
+    void SetCurrentTime(uint64_t totalMilliseconds);
+
+    std::function<void()> OnRefresh;
 
     void RefreshState() override;
     inline bool IsStillOpen() const override { return isVisible(); }

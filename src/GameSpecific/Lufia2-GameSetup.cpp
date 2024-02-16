@@ -113,31 +113,41 @@ namespace
             SetIntegerState("BlobAnimationState", blobAnimationState);
             SetFlagState("BlobDeathAnimation", blobAnimationState == 31);
 
+            uint64_t inGameHours = ram.ReadInteger<uint8_t>(0x0b4d);
+            uint64_t inGameMinutes = ram.ReadInteger<uint8_t>(0x0b4e);
+            uint64_t inGameSeconds = ram.ReadInteger<uint8_t>(0x0b4f);
+            uint64_t inGameSubsecondFrames = ram.ReadInteger<uint8_t>(0x0b50);
+
             // a small amount of state management
             if (ShouldTriggerReset())
                 hasFinishedJelly = false;
             else if (ShouldTriggerStop())
                 hasFinishedJelly = true;
+
+            if (ShouldTriggerStart() || CheckForFloorChanges())
+            {
+                if (inGameSubsecondFrames > 50)
+                    is60Fps = true;
+            }
+
+            if (!ShouldTriggerStop() && !hasFinishedJelly)
+            {
+                // the first second of the game time may briefly display wrong on 60fps versions, until we've detected whether we run at 60fps or 50fps; does not affect the actual total time accumulated.
+                uint64_t totalMilliseconds = (inGameHours * 60 * 60 + inGameMinutes * 60 + inGameSeconds) * 1000 + 1000 * inGameSubsecondFrames / (is60Fps ? 60 : 50);
+                SetIntegerState("InGameMilliseconds", totalMilliseconds);
+            }
         }
 
     private:
         SnesMemory snes;
 
         bool hasFinishedJelly = false;
+        bool is60Fps = false; // some versions run at 50fps
     };
 }
 
 Lufia2GameSetup::Lufia2GameSetup()
 {
-    allModes.emplace_back("Ancient Cave - Simple Timer", [this]()
-    {
-        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
-        SimpleTimerWindow *timer = CreateSimpleTimer();
-        timer->SetStartCheck([=]() { return watcher->ShouldTriggerStart(); });
-        timer->SetStopCheck([=]() { return watcher->ShouldTriggerStop(); });
-        timer->SetResetCheck([=]() { return watcher->ShouldTriggerReset(); });
-    });
-
     allModes.emplace_back("Ancient Cave - Every 10 Floors", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries;
@@ -180,6 +190,25 @@ Lufia2GameSetup::Lufia2GameSetup()
         };
 
         CreateTimerForFloorSets(allEntries);
+    });
+
+    allModes.emplace_back("Ancient Cave - Simple Real Time", [this]()
+    {
+        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
+        SimpleTimerWindow *timer = CreateSimpleTimer();
+        timer->SetStartCheck([=]() { return watcher->ShouldTriggerStart(); });
+        timer->SetStopCheck([=]() { return watcher->ShouldTriggerStop(); });
+        timer->SetResetCheck([=]() { return watcher->ShouldTriggerReset(); });
+    });
+
+    allModes.emplace_back("Ancient Cave - Simple Game Time", [this]()
+    {
+        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
+        SimpleTimerWindow *timer = CreateSimpleTimer();
+        timer->OnRefresh = [=]()
+        {
+            timer->SetCurrentTime(watcher->GetIntegerValue("InGameMilliseconds"));
+        };
     });
 }
 
