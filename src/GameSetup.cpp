@@ -79,3 +79,14 @@ void GameSetup::onWatcherTimerUpdate()
     if (OnWatcherUpdate)
         OnWatcherUpdate();
 }
+
+std::string GameSetup::SaveLayout()
+{
+    //TODO
+    return "";
+}
+
+void GameSetup::RestoreLayout(const std::string &layoutData)
+{
+    //TODO
+}

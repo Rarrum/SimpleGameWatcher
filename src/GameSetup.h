@@ -44,6 +44,9 @@ public:
 
     void CreateDebugWindow(); //called by main as needed
 
+    std::string SaveLayout();
+    void RestoreLayout(const std::string &layoutData);
+
 protected:
     virtual std::shared_ptr<GameWatcher> CreateGameSpecificWatcher() = 0;
 

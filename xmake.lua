@@ -17,5 +17,6 @@ target("EasyAutoTracker")
     add_headerfiles("src/**.h")
     add_files("src/**.cpp")
     add_frameworks("QtWidgets", "QtGui")
+    add_frameworks("nlohmann_json")
     set_warnings("all")
 

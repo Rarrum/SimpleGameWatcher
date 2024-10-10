@@ -1,6 +1,7 @@
 #include <vector>
 #include <list>
 #include <memory>
+#include <fstream>
 
 #include <QApplication>
 #include <QPushButton>
@@ -13,11 +14,45 @@
 #include <QStringListModel>
 #include <QCompleter>
 #include <QLabel>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include "Widgets/ClosableQWidget.h"
 #include "Widgets/SimpleTimerWindow.h"
 
 #include "GameList.h"
+
+namespace
+{
+    std::string ReadFileFromDisk(const std::string &fileName)
+    {
+        std::string ret;
+
+        std::ifstream file(fileName, std::ios::in | std::ios::binary);
+        if (file.is_open())
+        {
+            std::streampos startPos = file.tellg();
+            file.seekg(0, std::ios::end);
+            std::streampos endPos = file.tellg();
+            file.seekg(startPos, std::ios::beg);
+
+            ret.reserve(endPos - startPos);
+            ret.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+        }
+
+        return ret;
+    }
+
+    bool SaveFileToDisk(const std::string &fileName, const std::string &data)
+    {
+        std::ofstream file(fileName.c_str(), std::ios::out | std::ios::binary);
+        if (!file.is_open())
+            return false;
+
+        file.write(data.data(), data.size());
+        return true;
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -97,6 +132,45 @@ int main(int argc, char **argv)
         gameActionButtons.emplace_back(gameDebugButton);
     };
 
+    // load and save buttons (added in the windows layouts section below)
+    QPushButton *saveLayoutButton = new QPushButton(&window);
+    saveLayoutButton->setText("Save");
+    saveLayoutButton->setEnabled(false);
+    QObject::connect(saveLayoutButton, &QPushButton::clicked, [&]()
+    {
+        if (activeGame)
+        {
+            std::string fileName = QFileDialog::getSaveFileName(&window, "Save Layout", QString(), "Layout (*.json)").toStdString();
+            if (!fileName.empty())
+            {
+                std::string data = activeGame->SaveLayout();
+                if (!SaveFileToDisk(fileName, data))
+                {
+                    QMessageBox::warning(&window, "Not Good", "Failed to write file to disk.");
+                }
+            }
+        }
+    });
+
+    QPushButton *loadLayoutButton = new QPushButton(&window);
+    loadLayoutButton->setText("Load");
+    loadLayoutButton->setEnabled(false);
+    QObject::connect(loadLayoutButton, &QPushButton::clicked, [&]()
+    {
+        if (activeGame)
+        {
+            std::string fileName = QFileDialog::getOpenFileName(&window, "Load Layout", QString(), "Layout (*.json)").toStdString();
+            if (!fileName.empty())
+            {
+                std::string data = ReadFileFromDisk(fileName);
+                if (data.empty())
+                    QMessageBox::warning(&window, "Not Good", "Failed to read file from disk.");
+                else
+                    activeGame->RestoreLayout(data);
+            }
+        }
+    });
+
     // game select section
     QComboBox *comboGameSelect = new QComboBox(&window);
     comboGameSelect->setEditable(true);
@@ -144,6 +218,9 @@ int main(int argc, char **argv)
         activateGameButton->setText("Stop Auto And Reset");
         comboGameSelect->setEnabled(false);
 
+        loadLayoutButton->setEnabled(true);
+        saveLayoutButton->setEnabled(true);
+
         activeGameStatusLabel->setText("Starting scan...");
         activeGameStatusLabel->setStyleSheet("QLabel { color : blue; }");
 
@@ -190,8 +267,11 @@ int main(int argc, char **argv)
     {
         activateGameButton->setText("Enable Auto For Game");
         comboGameSelect->setEnabled(true);
-        activeGame->CloseWindowsAndStopWatching();
 
+        loadLayoutButton->setEnabled(false);
+        saveLayoutButton->setEnabled(false);
+
+        activeGame->CloseWindowsAndStopWatching();
         activeGame->OnWatcherUpdate = nullptr;
 
         for (QPushButton *gameAutoButton : gameActionButtons)
@@ -203,29 +283,13 @@ int main(int argc, char **argv)
     QGroupBox *gameSetupBox = new QGroupBox("Game Selection");
     gameSetupBox->setLayout(gameSelectLayout);
 
-    // layouts layout - coming soon?
-    /*
+    // layouts layout
     QGroupBox *loadSaveLayoutsBox = new QGroupBox("Window Layouts");
     QHBoxLayout *loadSaveLayoutsLayout = new QHBoxLayout();
 
-    QPushButton *loadLayoutButton = new QPushButton(&window);
-    loadLayoutButton->setText("Load");
-    QObject::connect(loadLayoutButton, &QPushButton::clicked, [&]()
-    {
-        //TODO
-    });
-
-    QPushButton *saveLayoutButton = new QPushButton(&window);
-    saveLayoutButton->setText("Save");
-    QObject::connect(saveLayoutButton, &QPushButton::clicked, [&]()
-    {
-        //TODO
-    });
-
-    loadSaveLayoutsLayout->addWidget(loadLayoutButton);
     loadSaveLayoutsLayout->addWidget(saveLayoutButton);
+    loadSaveLayoutsLayout->addWidget(loadLayoutButton);
     loadSaveLayoutsBox->setLayout(loadSaveLayoutsLayout);
-    */
 
     // main window layout
     QHBoxLayout *createButtonsLayout = new QHBoxLayout();
@@ -235,7 +299,7 @@ int main(int argc, char **argv)
     QVBoxLayout *topLayout = new QVBoxLayout();
     topLayout->addWidget(gameSetupBox, 1);
     topLayout->addLayout(createButtonsLayout, 999);
-    //topLayout->addWidget(loadSaveLayoutsBox, 1); // soon?
+    topLayout->addWidget(loadSaveLayoutsBox, 1);
 
     window.setLayout(topLayout);
     window.setWindowTitle("EasyAutoTracker");
