@@ -1,12 +1,11 @@
 #include "UpdatableGameWindow.h"
 
-std::string UpdatableGameWindow::SaveLayout()
+std::unordered_map<std::string, std::string> UpdatableGameWindow::SaveLayout() const
 {
-    //TODO
-    return "";
+    return {}; //TODO
 }
 
-void UpdatableGameWindow::RestoreLayout(const std::string &layoutData)
+void UpdatableGameWindow::RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData)
 {
     //TODO
 }

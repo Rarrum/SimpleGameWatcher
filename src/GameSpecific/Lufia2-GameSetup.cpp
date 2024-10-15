@@ -4,6 +4,8 @@
 #include <iterator>
 
 #include "../GameWatcher.h"
+#include "../Widgets/SimpleTimerWindow.h"
+#include "../Widgets/NestedTimerWindow.h"
 #include "../MemoryWatchers/SnesMemory.h"
 #include "../MemoryWatchers/MemoryPatternMatchUtils.h"
 
@@ -148,16 +150,16 @@ namespace
 
 Lufia2GameSetup::Lufia2GameSetup()
 {
-    allModes.emplace_back("Ancient Cave - Every 10 Floors", [this]()
+    AddGameMode("Ancient Cave - Every 10 Floors", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries;
         for (int i = 10; i < 100; i += 10)
             allEntries.emplace_back(std::tuple{i - 9, i, "Floor " + std::to_string(i)});
 
-        CreateTimerForFloorSets(allEntries);
+        return CreateTimerForFloorSets(allEntries);
     });
 
-    allModes.emplace_back("Ancient Cave - Cores and Archfiends", [this]()
+    AddGameMode("Ancient Cave - Cores and Archfiends", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries =
         {
@@ -169,10 +171,10 @@ Lufia2GameSetup::Lufia2GameSetup()
             {99, 99, "Jelly Kill"}
         };
 
-        CreateTimerForFloorSets(allEntries);
+        return CreateTimerForFloorSets(allEntries);
     });
 
-    allModes.emplace_back("Ancient Cave - Many Notable Enemies", [this]()
+    AddGameMode("Ancient Cave - Many Notable Enemies", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries =
         {
@@ -189,42 +191,48 @@ Lufia2GameSetup::Lufia2GameSetup()
             {99, 99, "Jelly Kill"}
         };
 
-        CreateTimerForFloorSets(allEntries);
+        return CreateTimerForFloorSets(allEntries);
     });
 
-    allModes.emplace_back("Ancient Cave - Simple Real Time", [this]()
+    AddGameMode("Ancient Cave - Simple Real Time", [this]()
     {
         std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
-        SimpleTimerWindow *timer = CreateSimpleTimer();
+        std::unique_ptr<SimpleTimerWindow> timer = std::make_unique<SimpleTimerWindow>();
         timer->SetStartCheck([=]() { return watcher->ShouldTriggerStart(); });
         timer->SetStopCheck([=]() { return watcher->ShouldTriggerStop(); });
         timer->SetResetCheck([=]() { return watcher->ShouldTriggerReset(); });
+
+        return timer;
     });
 
-    allModes.emplace_back("Ancient Cave - Simple Game Time", [this]()
+    AddGameMode("Ancient Cave - Simple Game Time", [this]()
     {
         std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
-        SimpleTimerWindow *timer = CreateSimpleTimer();
+        std::unique_ptr<SimpleTimerWindow> timerToReturn = std::make_unique<SimpleTimerWindow>();
+        SimpleTimerWindow *timer = timerToReturn.get();
         timer->OnRefresh = [=]()
         {
             timer->SetCurrentTime(watcher->GetIntegerValue("InGameMilliseconds"));
         };
+
+        return timerToReturn;
     });
 }
 
-void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, int, std::string>> &floorSets)
+std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, int, std::string>> &floorSets)
 {
-    if (floorSets.empty())
-        return;
-
     std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
-    NestedTimerWindow *timer = CreateNestedTimer();
+    std::unique_ptr<NestedTimerWindow> timerToReturn = std::make_unique<NestedTimerWindow>();
+    NestedTimerWindow *timer = timerToReturn.get();
 
     for (const auto& [floorNumberMin, floorNumberMax, floorName] : floorSets)
         timer->AddNestedTimer(floorName);
 
     timer->OnRefresh = [=]()
     {
+        if (floorSets.empty())
+            return;
+
         if (watcher->ShouldTriggerStart())
             timer->SetActiveTimer(std::get<2>(floorSets[0]));
         else if (watcher->ShouldTriggerStop())
@@ -259,16 +267,13 @@ void Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, 
             timer->SetFocusTimer(targetTimerToFocus);
         }
     };
+
+    return timerToReturn;
 }
 
 std::string Lufia2GameSetup::Name() const
 {
     return "Lufia 2";
-}
-
-std::vector<GameSetupMode>& Lufia2GameSetup::Entries()
-{
-    return allModes;
 }
 
 std::shared_ptr<GameWatcher> Lufia2GameSetup::CreateGameSpecificWatcher()

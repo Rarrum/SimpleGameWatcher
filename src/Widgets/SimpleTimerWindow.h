@@ -17,7 +17,7 @@
 class SimpleTimerWindow: public DraggableQWidget, public UpdatableGameWindow, public ColorChangerWidgetHelper
 {
 public:
-    SimpleTimerWindow(bool showControls);
+    SimpleTimerWindow(bool showControls = false);
 
     inline void SetStartCheck(std::function<bool()> shouldStart) { shouldStartCallback = shouldStart; }
     inline void SetStopCheck(std::function<bool()> shouldStop) { shouldStopCallback = shouldStop; }

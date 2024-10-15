@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 class UpdatableGameWindow
 {
@@ -11,6 +12,6 @@ public:
     virtual bool IsStillOpen() const = 0;
 
     // default implementations save/restore only position and size
-    virtual std::string SaveLayout();
-    virtual void RestoreLayout(const std::string &layoutData);
+    virtual std::unordered_map<std::string, std::string> SaveLayout() const;
+    virtual void RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData);
 };

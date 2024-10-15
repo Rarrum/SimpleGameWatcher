@@ -104,12 +104,12 @@ int main(int argc, char **argv)
         activeGame = allGames[index].get();
 
         auto &gameSetup = allGames[index];
-        for (GameSetupMode &gameMode : gameSetup->Entries())
+        for (const GameSetupMode &gameMode : gameSetup->Entries())
         {
             QPushButton *gameActionButton = new QPushButton();
             gameActionButton->setText(QString::fromStdString(gameMode.Name));
             gameActionButton->setEnabled(false);
-            GameSetupMode *gameModePointer = &gameMode;
+            const GameSetupMode *gameModePointer = &gameMode;
             QObject::connect(gameActionButton, &QPushButton::clicked, [=]()
             {
                 gameModePointer->Creator();
@@ -166,7 +166,16 @@ int main(int argc, char **argv)
                 if (data.empty())
                     QMessageBox::warning(&window, "Not Good", "Failed to read file from disk.");
                 else
-                    activeGame->RestoreLayout(data);
+                {
+                    try
+                    {
+                        activeGame->RestoreLayout(data);
+                    }
+                    catch (const std::exception &ex)
+                    {
+                        QMessageBox::warning(&window, "Not Good", QString("Error restoring layout data: ") + ex.what());
+                    }
+                }
             }
         }
     });

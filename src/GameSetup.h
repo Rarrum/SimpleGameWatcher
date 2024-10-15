@@ -11,8 +11,6 @@
 
 #include "GameWatcher.h"
 #include "Widgets/UpdatableGameWindow.h"
-#include "Widgets/SimpleTimerWindow.h"
-#include "Widgets/NestedTimerWindow.h"
 #include "Widgets/DebugGameStateWindow.h"
 
 struct GameSetupMode
@@ -34,7 +32,7 @@ public:
     virtual ~GameSetup() = default;
 
     virtual std::string Name() const = 0;
-    virtual std::vector<GameSetupMode>& Entries() = 0;
+    virtual const std::vector<GameSetupMode>& Entries();
 
     virtual void StartWatching();
     std::function<void()> OnWatcherUpdate;
@@ -44,21 +42,34 @@ public:
 
     void CreateDebugWindow(); //called by main as needed
 
-    std::string SaveLayout();
+    std::string SaveLayout() const;
     void RestoreLayout(const std::string &layoutData);
 
 protected:
     virtual std::shared_ptr<GameWatcher> CreateGameSpecificWatcher() = 0;
 
-    virtual void onWatcherTimerUpdate();
+    virtual void OnWatcherTimerUpdate();
 
-    SimpleTimerWindow* CreateSimpleTimer();
-    NestedTimerWindow* CreateNestedTimer();
+    void AddGameMode(const std::string name, std::function<std::unique_ptr<UpdatableGameWindow>()> creator);
 
 private:
     std::unique_ptr<QTimer> mainPollTimer;
     std::shared_ptr<GameWatcher> watcherToPoll;
 
+    std::vector<GameSetupMode> allModes;
+
+    struct NormalWindow
+    {
+        inline NormalWindow(const std::string gameMode, std::unique_ptr<UpdatableGameWindow> window)
+        {
+            GameMode =  gameMode;
+            Window = std::move(window);
+        }
+
+        std::string GameMode;
+        std::unique_ptr<UpdatableGameWindow> Window;
+    };
+
     std::list<std::unique_ptr<DebugGameStateWindow>> allDebugWindows;
-    std::list<std::unique_ptr<UpdatableGameWindow>> allNormalWindows;
+    std::list<NormalWindow> allNormalWindows;
 };

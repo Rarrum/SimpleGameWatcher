@@ -1,5 +1,10 @@
 #include "GameSetup.h"
 
+const std::vector<GameSetupMode>& GameSetup::Entries()
+{
+    return allModes;
+}
+
 void GameSetup::StartWatching()
 {
     if (watcherToPoll) //should not have been called, already running?
@@ -8,7 +13,7 @@ void GameSetup::StartWatching()
     watcherToPoll = CreateGameSpecificWatcher();
 
     mainPollTimer = std::make_unique<QTimer>();
-    QObject::connect(mainPollTimer.get(), &QTimer::timeout, [this](){ onWatcherTimerUpdate(); });
+    QObject::connect(mainPollTimer.get(), &QTimer::timeout, [this](){ OnWatcherTimerUpdate(); });
     mainPollTimer->start(1000 / 60);
 }
 
@@ -28,30 +33,25 @@ void GameSetup::CreateDebugWindow()
     allDebugWindows.emplace_back(std::move(debugWindow));
 }
 
-SimpleTimerWindow* GameSetup::CreateSimpleTimer()
+void GameSetup::AddGameMode(const std::string name, std::function<std::unique_ptr<UpdatableGameWindow>()> creator)
 {
-    std::unique_ptr<SimpleTimerWindow> timerWindow = std::make_unique<SimpleTimerWindow>(false);
+    auto createAndStoreWindow = [this,name,creator]()
+    {
+        std::unique_ptr<UpdatableGameWindow> window = creator();
+        allNormalWindows.emplace_back(NormalWindow(name, std::move(window)));
+    };
 
-    allNormalWindows.emplace_back(std::move(timerWindow));
-    return dynamic_cast<SimpleTimerWindow*>(allNormalWindows.back().get());
+    allModes.emplace_back(GameSetupMode(name, createAndStoreWindow));
 }
 
-NestedTimerWindow* GameSetup::CreateNestedTimer()
-{
-    std::unique_ptr<NestedTimerWindow> timerWindow = std::make_unique<NestedTimerWindow>();
-
-    allNormalWindows.emplace_back(std::move(timerWindow));
-    return dynamic_cast<NestedTimerWindow*>(allNormalWindows.back().get());
-}
-
-void GameSetup::onWatcherTimerUpdate()
+void GameSetup::OnWatcherTimerUpdate()
 {
     watcherToPoll->PollGameState();
 
     // we free and clean out user-closed windows on the timer tick, rather than in direct response to the window close (to avoid freeing something that's actively making the close callback)
     for (auto i = allNormalWindows.begin(); i != allNormalWindows.end(); )
     {
-        if (!(**i).IsStillOpen())
+        if (!i->Window->IsStillOpen())
             i = allNormalWindows.erase(i);
         else
             ++i;
@@ -68,8 +68,8 @@ void GameSetup::onWatcherTimerUpdate()
     // only update normal windows if the watcher is working
     if (watcherToPoll->IsReady())
     {
-        for (std::unique_ptr<UpdatableGameWindow> &normalWindow : allNormalWindows)
-            normalWindow->RefreshState();
+        for (NormalWindow &normalWindow : allNormalWindows)
+            normalWindow.Window->RefreshState();
     }
 
     // always update debug stuff, for our own sanity
@@ -80,8 +80,14 @@ void GameSetup::onWatcherTimerUpdate()
         OnWatcherUpdate();
 }
 
-std::string GameSetup::SaveLayout()
+std::string GameSetup::SaveLayout() const
 {
+    std::unordered_map<std::string, std::unordered_map<std::string, std::string>> layoutData;
+    for (const NormalWindow &window : allNormalWindows)
+    {
+        
+    }
+    
     //TODO
     return "";
 }
@@ -89,4 +95,6 @@ std::string GameSetup::SaveLayout()
 void GameSetup::RestoreLayout(const std::string &layoutData)
 {
     //TODO
+    //json j = json::parse(layoutData);
+    //int x = j.get<int>();
 }
