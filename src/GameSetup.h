@@ -16,14 +16,14 @@
 struct GameSetupMode
 {
     GameSetupMode() = default;
-    inline GameSetupMode(const std::string &name, std::function<void()> creator)
+    inline GameSetupMode(const std::string &name, std::function<UpdatableGameWindow*()> creator)
     {
         Name = name;
         Creator = creator;
     }
 
     std::string Name;
-    std::function<void()> Creator;
+    std::function<UpdatableGameWindow*()> Creator;
 };
 
 class GameSetup

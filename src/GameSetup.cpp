@@ -1,5 +1,7 @@
 #include "GameSetup.h"
 
+#include <nlohmann/json.hpp>
+
 const std::vector<GameSetupMode>& GameSetup::Entries()
 {
     return allModes;
@@ -35,10 +37,11 @@ void GameSetup::CreateDebugWindow()
 
 void GameSetup::AddGameMode(const std::string name, std::function<std::unique_ptr<UpdatableGameWindow>()> creator)
 {
-    auto createAndStoreWindow = [this,name,creator]()
+    auto createAndStoreWindow = [this, name, creator]()
     {
         std::unique_ptr<UpdatableGameWindow> window = creator();
         allNormalWindows.emplace_back(NormalWindow(name, std::move(window)));
+        return allNormalWindows.back().Window.get();
     };
 
     allModes.emplace_back(GameSetupMode(name, createAndStoreWindow));
@@ -82,19 +85,29 @@ void GameSetup::OnWatcherTimerUpdate()
 
 std::string GameSetup::SaveLayout() const
 {
-    std::unordered_map<std::string, std::unordered_map<std::string, std::string>> layoutData;
+    std::unordered_multimap<std::string, std::unordered_map<std::string, std::string>> layoutData;
     for (const NormalWindow &window : allNormalWindows)
     {
-        
+        layoutData.emplace(window.GameMode, window.Window->SaveLayout());
     }
-    
-    //TODO
-    return "";
+
+    nlohmann::json jsonData(layoutData);
+    return jsonData.dump(4);
 }
 
 void GameSetup::RestoreLayout(const std::string &layoutData)
 {
-    //TODO
-    //json j = json::parse(layoutData);
-    //int x = j.get<int>();
+    nlohmann::json jsonData = nlohmann::json::parse(layoutData);
+    for (const auto &jsonWindow : jsonData.items())
+    {
+        auto modeIter = std::find_if(allModes.begin(), allModes.end(), [&](const auto &mode) { return jsonWindow.key() == mode.Name; });
+        if (modeIter == allModes.end())
+        {
+            throw std::runtime_error(std::string("Layout data has unknown game mode: ") + jsonWindow.key());
+        }
+
+        std::unordered_map<std::string, std::string> windowData = jsonWindow.value();
+        UpdatableGameWindow* gameWindow = modeIter->Creator();
+        gameWindow->RestoreLayout(windowData);
+    }
 }

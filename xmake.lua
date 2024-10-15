@@ -10,6 +10,8 @@ end
 --    set_symbols("debug")
 --end
 
+add_requires("nlohmann_json")
+
 target("EasyAutoTracker")
     set_languages("cxx20")
     add_rules("qt.application")
@@ -17,6 +19,6 @@ target("EasyAutoTracker")
     add_headerfiles("src/**.h")
     add_files("src/**.cpp")
     add_frameworks("QtWidgets", "QtGui")
-    add_frameworks("nlohmann_json")
+    add_packages("nlohmann_json")
     set_warnings("all")
 
