@@ -244,6 +244,20 @@ void NestedTimerWindow::ResetAllTimers()
     }
 }
 
+std::unordered_map<std::string, std::string> NestedTimerWindow::SaveLayout() const
+{
+    std::unordered_map<std::string, std::string> layoutData;
+    DraggableQWidget::SaveLayoutIn(layoutData);
+    //ColorChangerWidgetHelper::SaveLayoutIn(layoutData);
+    return layoutData;
+}
+
+void NestedTimerWindow::RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData)
+{
+    DraggableQWidget::RestoreLayoutFrom(layoutData);
+    //ColorChangerWidgetHelper::RestoreLayoutFrom(layoutData);
+}
+
 void NestedTimerWindow::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::RightButton)

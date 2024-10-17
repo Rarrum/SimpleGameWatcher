@@ -29,6 +29,9 @@ public:
 
     std::function<void()> OnRefresh;
 
+    std::unordered_map<std::string, std::string> SaveLayout() const override;
+    void RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData) override;
+
 protected:
     void mousePressEvent(QMouseEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;

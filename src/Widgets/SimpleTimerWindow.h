@@ -29,6 +29,9 @@ public:
     void RefreshState() override;
     inline bool IsStillOpen() const override { return isVisible(); }
 
+    std::unordered_map<std::string, std::string> SaveLayout() const override;
+    void RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData) override;
+
 protected:
     void StartTimer();
     void StopTimer();
