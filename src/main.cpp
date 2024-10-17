@@ -140,7 +140,7 @@ int main(int argc, char **argv)
     {
         if (activeGame)
         {
-            std::string fileName = QFileDialog::getSaveFileName(&window, "Save Layout", QString(), "Layout (*.json)").toStdString();
+            std::string fileName = QFileDialog::getSaveFileName(&window, "Save Layout", QString(), "Layout (*.layout.json)").toStdString();
             if (!fileName.empty())
             {
                 std::string data = activeGame->SaveLayout();
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
     {
         if (activeGame)
         {
-            std::string fileName = QFileDialog::getOpenFileName(&window, "Load Layout", QString(), "Layout (*.json)").toStdString();
+            std::string fileName = QFileDialog::getOpenFileName(&window, "Load Layout", QString(), "Layout (*.layout.json)").toStdString();
             if (!fileName.empty())
             {
                 std::string data = ReadFileFromDisk(fileName);

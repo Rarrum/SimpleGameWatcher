@@ -112,6 +112,41 @@ public:
         }
     }
 
+    inline void SaveLayoutIn(std::unordered_map<std::string, std::string> &layoutData) const
+    {
+        int textR = 0, textG = 0, textB = 0;
+        widget->palette().text().color().getRgb(&textR, &textG, &textB);
+        layoutData.emplace("textR", std::to_string(textR));
+        layoutData.emplace("textG", std::to_string(textG));
+        layoutData.emplace("textB", std::to_string(textB));
+
+        int bgR = 0, bgG = 0, bgB = 0;
+        widget->palette().window().color().getRgb(&bgR, &bgG, &bgB);
+        layoutData.emplace("bgR", std::to_string(bgR));
+        layoutData.emplace("bgG", std::to_string(bgG));
+        layoutData.emplace("bgB", std::to_string(bgB));
+
+        bool isTransparentBg = widget->testAttribute(Qt::WA_TranslucentBackground);
+        layoutData.emplace("bgTransparent", isTransparentBg ? "1" : "0");
+    }
+
+    inline void RestoreLayoutFrom(const std::unordered_map<std::string, std::string> &layoutData)
+    {
+        int textR = std::stoi(layoutData.at("textR"));
+        int textG = std::stoi(layoutData.at("textG"));
+        int textB = std::stoi(layoutData.at("textB"));
+        SetTextColor(QColor(textR, textG, textB));
+
+        int bgR = std::stoi(layoutData.at("bgR"));
+        int bgG = std::stoi(layoutData.at("bgG"));
+        int bgB = std::stoi(layoutData.at("bgB"));
+        SetBackgroundColor(QColor(bgR, bgG, bgB)); //clears transparency
+
+        bool isTransparentBg = std::stoi(layoutData.at("bgTransparent")) != 0;
+        if (isTransparentBg)
+            SetBackgroundTransparent();
+    }
+
 private:
     QWidget *widget = nullptr;
 

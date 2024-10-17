@@ -24,7 +24,6 @@ void GameSetup::CloseWindowsAndStopWatching()
     allNormalWindows.clear();
     allDebugWindows.clear();
     mainPollTimer.reset();
-
     watcherToPoll.reset();
 }
 
@@ -97,7 +96,11 @@ std::string GameSetup::SaveLayout() const
 
 void GameSetup::RestoreLayout(const std::string &layoutData)
 {
+    allNormalWindows.clear();
+
     nlohmann::json jsonData = nlohmann::json::parse(layoutData);
+
+    std::string allErrors;
     for (const auto &jsonWindow : jsonData.items())
     {
         auto modeIter = std::find_if(allModes.begin(), allModes.end(), [&](const auto &mode) { return jsonWindow.key() == mode.Name; });
@@ -106,8 +109,19 @@ void GameSetup::RestoreLayout(const std::string &layoutData)
             throw std::runtime_error(std::string("Layout data has unknown game mode: ") + jsonWindow.key());
         }
 
-        std::unordered_map<std::string, std::string> windowData = jsonWindow.value();
         UpdatableGameWindow* gameWindow = modeIter->Creator();
-        gameWindow->RestoreLayout(windowData);
+
+        try
+        {
+            std::unordered_map<std::string, std::string> windowData = jsonWindow.value();
+            gameWindow->RestoreLayout(windowData);
+        }
+        catch (std::exception &ex)
+        {
+            allErrors += std::string() + "Error restoring layout for '" + jsonWindow.key() + "': " + ex.what() + "\n";
+        }
     }
+
+    if (!allErrors.empty())
+        throw std::runtime_error(allErrors);
 }

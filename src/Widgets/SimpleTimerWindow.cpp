@@ -180,12 +180,12 @@ std::unordered_map<std::string, std::string> SimpleTimerWindow::SaveLayout() con
 {
     std::unordered_map<std::string, std::string> layoutData;
     DraggableQWidget::SaveLayoutIn(layoutData);
-    //ColorChangerWidgetHelper::SaveLayoutIn(layoutData);
+    ColorChangerWidgetHelper::SaveLayoutIn(layoutData);
     return layoutData;
 }
 
 void SimpleTimerWindow::RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData)
 {
     DraggableQWidget::RestoreLayoutFrom(layoutData);
-    //ColorChangerWidgetHelper::RestoreLayoutFrom(layoutData);
+    ColorChangerWidgetHelper::RestoreLayoutFrom(layoutData);
 }
