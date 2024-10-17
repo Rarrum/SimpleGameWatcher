@@ -13,7 +13,7 @@ namespace
     std::string FormatDigits(int64_t number, int zeroPadToLength)
     {
         std::string formatted = std::to_string(number);
-        while (formatted.size() < zeroPadToLength)
+        while ((int)formatted.size() < zeroPadToLength)
             formatted = "0" + formatted;
 
         return formatted;
