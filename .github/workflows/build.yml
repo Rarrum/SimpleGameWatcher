@@ -23,7 +23,7 @@ jobs:
 
     - name: Build
       run:
-        xmake -w
+        xmake -w -y
 
     - name: Merge Qt Stuff
       run:
@@ -59,16 +59,16 @@ jobs:
 
     - name: Upload Windows Artifact
       if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: files
+        name: filesWindows
         path: buildZipped\\EasyAutoTracker-Windows.zip
 
     - name: Upload Linux Artifact
       if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: files
+        name: filesLinux
         path: buildZipped/EasyAutoTracker-Linux.zip
 
   create_release:
@@ -77,10 +77,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download Artifacts
-      uses: actions/download-artifact@v3
+    - name: Download Windows Artifacts
+      uses: actions/download-artifact@v4
       with:
-        name: files
+        name: filesWindows
+        path: files
+
+    - name: Download Linux Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: filesLinux
+        path: files
 
     - name: Create Draft Release
       uses: softprops/action-gh-release@v1
