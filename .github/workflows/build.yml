@@ -81,13 +81,11 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: filesWindows
-        path: files
 
     - name: Download Linux Artifacts
       uses: actions/download-artifact@v4
       with:
         name: filesLinux
-        path: files
 
     - name: Create Draft Release
       uses: softprops/action-gh-release@v1
