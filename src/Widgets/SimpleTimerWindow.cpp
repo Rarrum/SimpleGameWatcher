@@ -13,7 +13,7 @@ namespace
     std::string FormatDigits(int64_t number, int zeroPadToLength)
     {
         std::string formatted = std::to_string(number);
-        while (formatted.size() < zeroPadToLength)
+        while ((int)formatted.size() < zeroPadToLength)
             formatted = "0" + formatted;
 
         return formatted;
@@ -174,4 +174,18 @@ void SimpleTimerWindow::RefreshState()
         ResetTimer();
 
     //NOTE: SimpleTimerWindow has its own timer callback for UI updates, since it might be used in manual mode without a game watcher
+}
+
+std::unordered_map<std::string, std::string> SimpleTimerWindow::SaveLayout() const
+{
+    std::unordered_map<std::string, std::string> layoutData;
+    DraggableQWidget::SaveLayoutIn(layoutData);
+    ColorChangerWidgetHelper::SaveLayoutIn(layoutData);
+    return layoutData;
+}
+
+void SimpleTimerWindow::RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData)
+{
+    DraggableQWidget::RestoreLayoutFrom(layoutData);
+    ColorChangerWidgetHelper::RestoreLayoutFrom(layoutData);
 }

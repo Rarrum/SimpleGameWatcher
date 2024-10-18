@@ -2,6 +2,9 @@
 
 #include "ClosableQWidget.h"
 
+#include <unordered_map>
+#include <string>
+
 class DraggableQWidget: public ClosableQWidget
 {
 public:
@@ -11,6 +14,24 @@ public:
     }
 
     int resizeBorder = 0;
+
+    inline void SaveLayoutIn(std::unordered_map<std::string, std::string> &layoutData) const
+    {
+        layoutData.emplace("x", std::to_string(x()));
+        layoutData.emplace("y", std::to_string(y()));
+        layoutData.emplace("width", std::to_string(width()));
+        layoutData.emplace("height", std::to_string(height()));
+    }
+
+    inline void RestoreLayoutFrom(const std::unordered_map<std::string, std::string> &layoutData)
+    {
+        int xNew = std::stoi(layoutData.at("x"));
+        int yNew = std::stoi(layoutData.at("y"));
+        int widNew = std::stoi(layoutData.at("width"));
+        int heiNew = std::stoi(layoutData.at("height"));
+
+        setGeometry(xNew, yNew, widNew, heiNew);
+    }
 
 protected:
     inline void mousePressEvent(QMouseEvent *event) override

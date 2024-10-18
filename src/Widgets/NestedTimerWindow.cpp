@@ -12,7 +12,7 @@ namespace
     std::string FormatDigits(int64_t number, int zeroPadToLength)
     {
         std::string formatted = std::to_string(number);
-        while (formatted.size() < zeroPadToLength)
+        while ((int)formatted.size() < zeroPadToLength)
             formatted = "0" + formatted;
 
         return formatted;
@@ -242,6 +242,20 @@ void NestedTimerWindow::ResetAllTimers()
         nested.Focused = false;
         nested.Touched = false;
     }
+}
+
+std::unordered_map<std::string, std::string> NestedTimerWindow::SaveLayout() const
+{
+    std::unordered_map<std::string, std::string> layoutData;
+    DraggableQWidget::SaveLayoutIn(layoutData);
+    ColorChangerWidgetHelper::SaveLayoutIn(layoutData);
+    return layoutData;
+}
+
+void NestedTimerWindow::RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData)
+{
+    DraggableQWidget::RestoreLayoutFrom(layoutData);
+    ColorChangerWidgetHelper::RestoreLayoutFrom(layoutData);
 }
 
 void NestedTimerWindow::mousePressEvent(QMouseEvent *event)

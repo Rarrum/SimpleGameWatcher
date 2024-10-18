@@ -19,6 +19,10 @@ public:
     void RefreshState() override;
     inline bool IsStillOpen() const override { return isVisible(); }
 
+    // debug window can't be saved/restored
+    inline std::unordered_map<std::string, std::string> SaveLayout() const override { return {}; }
+    inline void RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData) override {}
+
 private:
     QTableWidget *table;
     std::shared_ptr<GameWatcher> watcher;

@@ -17,7 +17,7 @@
 class SimpleTimerWindow: public DraggableQWidget, public UpdatableGameWindow, public ColorChangerWidgetHelper
 {
 public:
-    SimpleTimerWindow(bool showControls);
+    SimpleTimerWindow(bool showControls = false);
 
     inline void SetStartCheck(std::function<bool()> shouldStart) { shouldStartCallback = shouldStart; }
     inline void SetStopCheck(std::function<bool()> shouldStop) { shouldStopCallback = shouldStop; }
@@ -28,6 +28,9 @@ public:
 
     void RefreshState() override;
     inline bool IsStillOpen() const override { return isVisible(); }
+
+    std::unordered_map<std::string, std::string> SaveLayout() const override;
+    void RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData) override;
 
 protected:
     void StartTimer();
