@@ -23,7 +23,7 @@ jobs:
 
     - name: Build
       run:
-        xmake -w
+        xmake -w -y
 
     - name: Merge Qt Stuff
       run:
