@@ -16,4 +16,5 @@ TODO (The initial build only supports Lufia 2's Ancient Cave, run in various sne
 # Known issues
 - Memory scanning sometimes runs into false positives (using an emulator's cheat memory search or save states might trigger this).  If you run into this, try restarting the emulator.
 - On linux, scanning doesn't work until the user runs "sudo setcap cap_sys_ptrace=eip EasyAutoTracker" on the executable - need to automate setting this somehow.
+- On linux, Qt5 libraries need to be installed on the system before the released build will run.
 - High CPU usage and UI lag if an emulator is running and we're actively searching for a game whose memory patterns have not been found yet in the emulator.
