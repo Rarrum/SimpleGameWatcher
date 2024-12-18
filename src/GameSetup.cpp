@@ -2,9 +2,14 @@
 
 #include <nlohmann/json.hpp>
 
-const std::vector<GameSetupMode>& GameSetup::Entries()
+const std::vector<GameSetupMode>& GameSetup::GameModes()
 {
     return allModes;
+}
+
+std::vector<GameSetupOption>& GameSetup::GameOptions()
+{
+    return allOptions;
 }
 
 void GameSetup::StartWatching()
@@ -34,7 +39,7 @@ void GameSetup::CreateDebugWindow()
     allDebugWindows.emplace_back(std::move(debugWindow));
 }
 
-void GameSetup::AddGameMode(const std::string name, std::function<std::unique_ptr<UpdatableGameWindow>()> creator)
+void GameSetup::AddGameMode(const std::string &name, std::function<std::unique_ptr<UpdatableGameWindow>()> creator)
 {
     auto createAndStoreWindow = [this, name, creator]()
     {
@@ -44,6 +49,13 @@ void GameSetup::AddGameMode(const std::string name, std::function<std::unique_pt
     };
 
     allModes.emplace_back(GameSetupMode(name, createAndStoreWindow));
+}
+
+void GameSetup::AddGameBoolOption(const std::string &name, std::function<void(bool enabled)> optionChanged, bool initialState)
+{
+    allOptions.emplace_back(GameSetupOption(name, optionChanged));
+    allOptions.back().Enabled = initialState;
+    optionChanged(initialState);
 }
 
 void GameSetup::OnWatcherTimerUpdate()

@@ -26,13 +26,28 @@ struct GameSetupMode
     std::function<UpdatableGameWindow*()> Creator;
 };
 
+struct GameSetupOption
+{
+    GameSetupOption() = default;
+    inline GameSetupOption(const std::string &name, std::function<void(bool enabled)> optionChanged)
+    {
+        Name = name;
+        OptionChanged = optionChanged;
+    }
+
+    std::string Name;
+    bool Enabled = false;
+    std::function<void(bool enabled)> OptionChanged;
+};
+
 class GameSetup
 {
 public:
     virtual ~GameSetup() = default;
 
     virtual std::string Name() const = 0;
-    virtual const std::vector<GameSetupMode>& Entries();
+    const std::vector<GameSetupMode>& GameModes();
+    std::vector<GameSetupOption>& GameOptions(); // note: non-const because the enabled state can mutate with user input
 
     virtual void StartWatching();
     std::function<void()> OnWatcherUpdate;
@@ -50,13 +65,15 @@ protected:
 
     virtual void OnWatcherTimerUpdate();
 
-    void AddGameMode(const std::string name, std::function<std::unique_ptr<UpdatableGameWindow>()> creator);
+    void AddGameMode(const std::string &name, std::function<std::unique_ptr<UpdatableGameWindow>()> creator);
+    void AddGameBoolOption(const std::string &name, std::function<void(bool enabled)> optionChanged, bool initialState);
 
 private:
     std::unique_ptr<QTimer> mainPollTimer;
     std::shared_ptr<GameWatcher> watcherToPoll;
 
     std::vector<GameSetupMode> allModes;
+    std::vector<GameSetupOption> allOptions;
 
     struct NormalWindow
     {

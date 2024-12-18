@@ -16,6 +16,7 @@
 #include <QLabel>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QCheckBox>
 
 #include "Widgets/ClosableQWidget.h"
 #include "Widgets/SimpleTimerWindow.h"
@@ -66,14 +67,14 @@ int main(int argc, char **argv)
     // main window
     QApplication app(argc, argv);
     ClosableQWidget window = ClosableQWidget();
-    window.resize(450, 400);
+    window.resize(500, 400);
 
     // manual section
     QVBoxLayout *manualLayout = new QVBoxLayout();
     manualLayout->setAlignment(Qt::AlignTop);
     QGroupBox *manualBox = new QGroupBox("Create Manual Controlled");
     manualBox->setLayout(manualLayout);
-    
+
     QPushButton *createManualTimerButton = new QPushButton(&window);
     createManualTimerButton->setText("Simple Timer");
     QObject::connect(createManualTimerButton, &QPushButton::clicked, [&]()
@@ -83,32 +84,51 @@ int main(int argc, char **argv)
     manualLayout->addWidget(createManualTimerButton);
 
     // auto section
-    QGroupBox *autoBox = new QGroupBox("Create Auto Controlled");
-    QVBoxLayout *autoLayout = new QVBoxLayout();;
+    QGroupBox *autoBox = new QGroupBox("Create Game Auto Controlled");
+    QVBoxLayout *autoLayout = new QVBoxLayout();
     autoLayout->setAlignment(Qt::AlignTop);
     autoBox->setLayout(autoLayout);
-    
+
+    //options section
+    QGroupBox *optionsBox = new QGroupBox("Game Auto Options");
+    QVBoxLayout *optionsLayout = new QVBoxLayout();
+    optionsLayout->setAlignment(Qt::AlignTop);
+    optionsBox->setLayout(optionsLayout);
+
+    // game change handler
     std::vector<QPushButton*> gameActionButtons;
+    std::vector<QCheckBox*> gameOptionCheckers;
     auto currentGameIndedChangedAction = [&](int index)
     {
+        // clear old game actions and options
         for (QPushButton *b : gameActionButtons)
         {
             autoLayout->removeWidget(b);
             delete b;
         }
         gameActionButtons.clear();
+        
+        for (QCheckBox *b : gameOptionCheckers)
+        {
+            optionsLayout->removeWidget(b);
+            delete b;
+        }
+        gameOptionCheckers.clear();
 
+        // change game
         if (index < 0 || index >= (int)allGames.size())
             return;
 
         activeGame = allGames[index].get();
 
+        // add new game actions buttons
         auto &gameSetup = allGames[index];
-        for (const GameSetupMode &gameMode : gameSetup->Entries())
+        for (const GameSetupMode &gameMode : gameSetup->GameModes())
         {
             QPushButton *gameActionButton = new QPushButton();
             gameActionButton->setText(QString::fromStdString(gameMode.Name));
             gameActionButton->setEnabled(false);
+
             const GameSetupMode *gameModePointer = &gameMode;
             QObject::connect(gameActionButton, &QPushButton::clicked, [=]()
             {
@@ -119,7 +139,7 @@ int main(int argc, char **argv)
             gameActionButtons.emplace_back(gameActionButton);
         }
 
-        //every game gets a debug mode too
+        // (every game gets a debug mode too)
         QPushButton *gameDebugButton = new QPushButton();
         gameDebugButton->setText("Debug");
         gameDebugButton->setEnabled(false);
@@ -130,6 +150,24 @@ int main(int argc, char **argv)
         });
         autoLayout->addWidget(gameDebugButton);
         gameActionButtons.emplace_back(gameDebugButton);
+
+        // add new game options boxes
+        for (GameSetupOption &gameOption : gameSetup->GameOptions())
+        {
+            QCheckBox *gameOptionBox = new QCheckBox();
+            gameOptionBox->setText(QString::fromStdString(gameOption.Name));
+            gameOptionBox->setEnabled(true);
+
+            GameSetupOption *gameOptionPointer = &gameOption;
+            QObject::connect(gameOptionBox, &QCheckBox::stateChanged, [=]()
+            {
+                gameOptionPointer->Enabled = gameOptionBox->isChecked();
+                gameOptionPointer->OptionChanged(gameOptionPointer->Enabled);
+            });
+
+            optionsLayout->addWidget(gameOptionBox);
+            gameOptionCheckers.emplace_back(gameOptionBox);
+        }
     };
 
     // load and save buttons (added in the windows layouts section below)
@@ -292,6 +330,14 @@ int main(int argc, char **argv)
     QGroupBox *gameSetupBox = new QGroupBox("Game Selection");
     gameSetupBox->setLayout(gameSelectLayout);
 
+    // manual and auto options/creation layout
+    QWidget *leftCreationOptionsHolder = new QWidget();
+    QVBoxLayout *leftCreationOptionsLayout = new QVBoxLayout();
+    leftCreationOptionsLayout->setContentsMargins(0, 0, 0, 0); // fix the left section being "smaller" than the right
+    leftCreationOptionsLayout->addWidget(manualBox);
+    leftCreationOptionsLayout->addWidget(optionsBox);
+    leftCreationOptionsHolder->setLayout(leftCreationOptionsLayout);
+
     // layouts layout
     QGroupBox *loadSaveLayoutsBox = new QGroupBox("Window Layouts");
     QHBoxLayout *loadSaveLayoutsLayout = new QHBoxLayout();
@@ -302,7 +348,7 @@ int main(int argc, char **argv)
 
     // main window layout
     QHBoxLayout *createButtonsLayout = new QHBoxLayout();
-    createButtonsLayout->addWidget(manualBox);
+    createButtonsLayout->addWidget(leftCreationOptionsHolder);
     createButtonsLayout->addWidget(autoBox);
 
     QVBoxLayout *topLayout = new QVBoxLayout();

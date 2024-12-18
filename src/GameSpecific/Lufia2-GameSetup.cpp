@@ -112,7 +112,6 @@ namespace
             uint16_t blobHpAfterCurrentAttack = ram.ReadInteger<uint16_t>(0x162C);
             SetIntegerState("BlobHP", blobHpAfterCurrentAttack);
             uint8_t blobAnimationState = ram.ReadInteger<uint8_t>(0x421d); // also has other values outside of the blob fight sometimes
-            SetIntegerState("BlobAnimationState", blobAnimationState);
             SetFlagState("BlobDeathAnimation", blobAnimationState == 31);
 
             uint64_t inGameHours = ram.ReadInteger<uint8_t>(0x0b4d);
@@ -217,6 +216,11 @@ Lufia2GameSetup::Lufia2GameSetup()
 
         return timerToReturn;
     });
+
+    AddGameBoolOption("Require Two Jelly Kills", [this](bool enabled)
+    {
+        
+    }, false);
 }
 
 std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, int, std::string>> &floorSets)
