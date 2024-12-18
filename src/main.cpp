@@ -156,7 +156,8 @@ int main(int argc, char **argv)
         {
             QCheckBox *gameOptionBox = new QCheckBox();
             gameOptionBox->setText(QString::fromStdString(gameOption.Name));
-            gameOptionBox->setEnabled(true);
+            gameOptionBox->setEnabled(false);
+            gameOptionBox->setCheckState(gameOption.Enabled ? Qt::Checked : Qt::Unchecked);
 
             GameSetupOption *gameOptionPointer = &gameOption;
             QObject::connect(gameOptionBox, &QCheckBox::stateChanged, [=]()
@@ -212,6 +213,13 @@ int main(int argc, char **argv)
                     catch (const std::exception &ex)
                     {
                         QMessageBox::warning(&window, "Not Good", QString("Error restoring layout data: ") + ex.what());
+                    }
+
+                    for (QCheckBox *optionsBox : gameOptionCheckers)
+                    {
+                        auto optionIter = std::find_if(activeGame->GameOptions().begin(), activeGame->GameOptions().end(), [&](const auto &option) { return optionsBox->text().toStdString() == option.Name; });
+                        if (optionIter !=activeGame->GameOptions().end())
+                            optionsBox->setCheckState(optionIter->Enabled ? Qt::Checked : Qt::Unchecked);
                     }
                 }
             }
@@ -308,6 +316,9 @@ int main(int argc, char **argv)
 
         for (QPushButton *gameAutoButton : gameActionButtons)
             gameAutoButton->setEnabled(true);
+
+        for (QCheckBox *gameOptionBox : gameOptionCheckers)
+            gameOptionBox->setEnabled(true);
     };
 
     onDisableGameAuto = [&]()
@@ -323,6 +334,9 @@ int main(int argc, char **argv)
 
         for (QPushButton *gameAutoButton : gameActionButtons)
             gameAutoButton->setEnabled(false);
+
+        for (QCheckBox *gameOptionBox : gameOptionCheckers)
+            gameOptionBox->setEnabled(false);
 
         activeGameStatusLabel->setText("");
     };

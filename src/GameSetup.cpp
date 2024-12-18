@@ -96,13 +96,17 @@ void GameSetup::OnWatcherTimerUpdate()
 
 std::string GameSetup::SaveLayout() const
 {
-    std::unordered_multimap<std::string, std::unordered_map<std::string, std::string>> layoutData;
+    std::unordered_multimap<std::string, std::unordered_map<std::string, std::string>> windowData;
     for (const NormalWindow &window : allNormalWindows)
-    {
-        layoutData.emplace(window.GameMode, window.Window->SaveLayout());
-    }
+        windowData.emplace(window.GameMode, window.Window->SaveLayout());
 
-    nlohmann::json jsonData(layoutData);
+    std::unordered_multimap<std::string, bool> optionData;
+    for (const GameSetupOption &option: allOptions)
+        optionData.emplace(option.Name, option.Enabled);
+
+    nlohmann::json jsonData;
+    jsonData["windows"] = windowData;
+    jsonData["options"] = optionData;
     return jsonData.dump(4);
 }
 
@@ -113,12 +117,12 @@ void GameSetup::RestoreLayout(const std::string &layoutData)
     nlohmann::json jsonData = nlohmann::json::parse(layoutData);
 
     std::string allErrors;
-    for (const auto &jsonWindow : jsonData.items())
+    for (const auto &jsonWindow : jsonData["windows"].items())
     {
         auto modeIter = std::find_if(allModes.begin(), allModes.end(), [&](const auto &mode) { return jsonWindow.key() == mode.Name; });
         if (modeIter == allModes.end())
         {
-            throw std::runtime_error(std::string("Layout data has unknown game mode: ") + jsonWindow.key());
+            allErrors += std::string("Layout data has unknown game mode: ") + jsonWindow.key() + "\n";
         }
 
         UpdatableGameWindow* gameWindow = modeIter->Creator();
@@ -132,6 +136,18 @@ void GameSetup::RestoreLayout(const std::string &layoutData)
         {
             allErrors += std::string() + "Error restoring layout for '" + jsonWindow.key() + "': " + ex.what() + "\n";
         }
+    }
+
+    for (const auto &jsonOption: jsonData["options"].items())
+    {
+        auto optionIter = std::find_if(allOptions.begin(), allOptions.end(), [&](const auto &option) { return jsonOption.key() == option.Name; });
+        if (optionIter == allOptions.end())
+        {
+            allErrors += std::string("Option data has unknown option: ") + jsonOption.key() + "\n";
+        }
+
+        optionIter->Enabled = jsonOption.value();
+        optionIter->OptionChanged(optionIter->Enabled);
     }
 
     if (!allErrors.empty())
