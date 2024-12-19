@@ -7,7 +7,6 @@
 namespace
 {
     const uint32_t SnesRamSize = 128 * 1024;
-    const uint32_t SnesRomSize = 6 * 1024 * 1024;
 }
 
 struct SnesMemoryInternal

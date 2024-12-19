@@ -21,7 +21,7 @@ namespace
 
         bool ShouldTriggerStart()
         {
-            return ((GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik"));
+            return ((GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik")) && !hasFinishedRun;
         }
 
         bool ShouldTriggerStop()
@@ -32,12 +32,12 @@ namespace
 
         bool ShouldTriggerReset()
         {
-            return GetIntegerValue("Floor") != 99 && (GetFlagValue("OnTitleMenu") || (GetFlagValue("OnNameSelect") && !GetFlagValue("ScreenFading")));
+            return !GetFlagValue("OnJellyFloor") && (GetFlagValue("OnTitleMenu") || (GetFlagValue("OnNameSelect") && !GetFlagValue("ScreenFading")));
         }
 
         bool ShouldProcessFloorChanges()
         {
-            return !hasFinishedRun;
+            return !hasFinishedRun && GetFlagValue("InCave");
         }
 
         bool IsTwoJellyMode = false;
@@ -97,9 +97,6 @@ namespace
             lastWarningForUser.clear();
 
             // grab data from ram and store it for later use
-            int floor = ram.ReadInteger<uint8_t>(0x0B75); //NOTE: This is the "best floor" from the scoreboard data, not the actual current floor!
-            SetIntegerState("Floor", floor);
-
             bool onTitleMenu = ram.ReadInteger<uint8_t>(0x0009) == 184 && ram.ReadInteger<uint8_t>(0x000A) == 161;
             SetFlagState("OnTitleMenu", onTitleMenu);
 
@@ -112,14 +109,43 @@ namespace
             SetFlagState("OnNameSelect", ram.ReadInteger<uint8_t>(0x0009) == 49 && ram.ReadInteger<uint8_t>(0x000A) == 126 && ram.ReadInteger<uint32_t>(0x0011) == 0 && !inGruberix && !onTitleMenu);
             SetFlagState("ScreenFading", !(ram.ReadInteger<uint8_t>(0x0583) == 15 || (ram.ReadInteger<uint8_t>(0x0583) == 128 && ram.ReadInteger<uint8_t>(0x0581) != 0)));
 
+            int bestFloor = ram.ReadInteger<uint8_t>(0x0B75); //NOTE: This is the "best floor" from the scoreboard data, not the actual current floor!
+            SetIntegerState("BestFloor", bestFloor);
+            int floor = ram.ReadInteger<uint8_t>(0x1E696);
+            if (floor > 1) // changes to 0 between floors
+                SetIntegerState("Floor", floor - 1);
+
+            bool onOverworld = (locationIdA == 15163 && locationIdB == 15419 && locationIdC == 15164) || // transition
+                               (locationIdA == 43176 && locationIdB == 43176 && locationIdC == 43176); // actually there
+            SetFlagState("OnOverworld", onOverworld);
+
+            bool inCaveEntrance = locationIdA == 3386 && locationIdB == 3387 && locationIdC == 3388 && !inGruberix;
+            SetFlagState("InCaveEntrance", inCaveEntrance);
+
+            bool inCave = locationIdA == 12288 && locationIdB == 12288 && locationIdC == 12288; //NOTE: This changes to 0 between floors, so account for previous state
+            inCave |= (locationIdA == 0 && locationIdB == 0 && locationIdC == 0) || GetFlagValue("InCave");
+            inCave &= !onTitleMenu && !inGruberix && !onOverworld;
+            SetFlagState("InCave", inCave);
+
+            bool onJellyFloor = (locationIdA == 0 && locationIdB == 0 && locationIdC == 0 && floor == 99 && !GetFlagValue("ScreenFading")) || GetFlagValue("OnJellyFloor"); //floor memory value is 99 for both B98 and B99
+            SetFlagState("OnJellyFloor", onJellyFloor);
+
+            if (!inCave || inCaveEntrance)
+            {
+                SetIntegerState("Floor", 0);
+                SetFlagState("OnJellyFloor", false);
+            }
+            else if (onJellyFloor)
+                SetIntegerState("Floor", 99);
+
             uint16_t blobHpAfterCurrentAttack = ram.ReadInteger<uint16_t>(0x162C);
             SetIntegerState("BlobHP", blobHpAfterCurrentAttack);
             uint8_t blobAnimationState = ram.ReadInteger<uint8_t>(0x421d); // also has other values outside of the blob fight sometimes
-            SetFlagState("BlobDeathAnimation", blobAnimationState == 31);
+            bool isBlobDeadAnimation = blobAnimationState == 31;
 
-            if (floor == 99)
+            if (onJellyFloor)
             {
-                bool jellyDeath = GetIntegerValue("BlobHP") == 0 && GetFlagValue("BlobDeathAnimation");
+                bool jellyDeath = GetIntegerValue("BlobHP") == 0 && isBlobDeadAnimation;
                 if (GetFlagValue("AllowJellyKillCountChange") && jellyDeath)
                 {
                     SetIntegerState("JellyKillCount", GetIntegerValue("JellyKillCount") + 1);
@@ -130,6 +156,9 @@ namespace
             {
                 SetFlagState("AllowJellyKillCountChange", true);
             }
+
+            if (inCaveEntrance)
+                SetIntegerState("CaveRunNumber", GetIntegerValue("JellyKillCount") + 1);
 
             uint64_t inGameHours = ram.ReadInteger<uint8_t>(0x0b4d);
             uint64_t inGameMinutes = ram.ReadInteger<uint8_t>(0x0b4e);
@@ -172,7 +201,9 @@ Lufia2GameSetup::Lufia2GameSetup()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries;
         for (int i = 10; i < 100; i += 10)
-            allEntries.emplace_back(std::tuple{i - 9, i, "Floor " + std::to_string(i)});
+            allEntries.emplace_back(std::tuple{i - 9, i, "Floors " + std::to_string(i - 9) + "-" + std::to_string(i)});
+
+        allEntries.emplace_back(std::tuple{99, 99, "Jelly Kill"});
 
         return CreateTimerForFloorSets(allEntries);
     });
@@ -294,8 +325,11 @@ std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(co
 
             timer->SetFocusTimer(targetTimerToFocus);
 
+            std::string labelPrefix = watcher->IsTwoJellyMode ? std::string("(") + std::to_string(watcher->GetIntegerValue("CaveRunNumber")) + ") " : "";
             if (!targetTimerToFocus.empty())
-                timer->SetNameDisplayPrefix(targetTimerToFocus, watcher->IsTwoJellyMode ? std::string("(") + std::to_string(watcher->GetIntegerValue("JellyKillCount") + 1) + ") " : "");
+                timer->SetNameDisplayPrefix(targetTimerToFocus, labelPrefix);
+            if (!targetTimerToActivate.empty())
+                timer->SetNameDisplayPrefix(targetTimerToActivate, labelPrefix);
         }
     };
 
