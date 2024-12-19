@@ -114,11 +114,11 @@ namespace
             //int redChestScoreboard = ram.ReadInteger<uint16_t>(0x0B70);
             //SetIntegerState("RedChestScoreboard", redChestScoreboard);
 
-            int jellyKillScoreboard = ram.ReadInteger<uint8_t>(0x0B74);
-            SetIntegerState("JellyKillScoreboard", jellyKillScoreboard); // not currently using this for logic because there's a slight delay after the killing blow before it increments
+            //int jellyKillScoreboard = ram.ReadInteger<uint8_t>(0x0B74); // not currently using this for logic because there's a slight delay after the killing blow before it increments
+            //SetIntegerState("JellyKillScoreboard", jellyKillScoreboard);
 
-            int bestFloorScoreboard = ram.ReadInteger<uint8_t>(0x0B75);
-            SetIntegerState("BestFloorScoreboard", bestFloorScoreboard);
+            //int bestFloorScoreboard = ram.ReadInteger<uint8_t>(0x0B75); // may use this later...
+            //SetIntegerState("BestFloorScoreboard", bestFloorScoreboard);
 
             int floor = ram.ReadInteger<uint8_t>(0x1E696);
             if (floor > 1) // changes to 0 between floors
@@ -133,7 +133,7 @@ namespace
 
             bool inCave = locationIdA == 12288 && locationIdB == 12288 && locationIdC == 12288; //NOTE: This changes to 0 between floors, so account for previous state
             inCave |= (locationIdA == 0 && locationIdB == 0 && locationIdC == 0) || GetFlagValue("InCave");
-            inCave &= !onTitleMenu && !inGruberix && !onOverworld;
+            inCave &= !onTitleMenu && !inGruberix && !onOverworld && !inCaveEntrance;
             SetFlagState("InCave", inCave);
 
             bool onJellyFloor = (locationIdA == 0 && locationIdB == 0 && locationIdC == 0 && floor == 99 && !GetFlagValue("ScreenFading")) || GetFlagValue("OnJellyFloor"); //floor memory value is 99 for both B98 and B99
@@ -159,14 +159,16 @@ namespace
                 {
                     SetIntegerState("JellyKillCount", GetIntegerValue("JellyKillCount") + 1);
                     SetFlagState("AllowJellyKillCountChange", false);
+                    SetFlagState("JellyOnCurrentFloorIsDead", true);
                 }
             }
             else
             {
                 SetFlagState("AllowJellyKillCountChange", true);
+                SetFlagState("JellyOnCurrentFloorIsDead", false);
             }
 
-            if (inCaveEntrance)
+            if (inCaveEntrance || GetIntegerValue("CaveRunNumber") == 0)
                 SetIntegerState("CaveRunNumber", GetIntegerValue("JellyKillCount") + 1);
 
             uint64_t inGameHours = ram.ReadInteger<uint8_t>(0x0b4d);
@@ -329,7 +331,9 @@ std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(co
                     targetTimerToFocus = floorName;
             }
 
-            if (!targetTimerToActivate.empty())
+            if (watcher->GetFlagValue("JellyOnCurrentFloorIsDead")) // so the subtimer stops in two-jelly mode on kill
+                timer->SetActiveTimer("");
+            else if (!targetTimerToActivate.empty())
                 timer->SetActiveTimer(targetTimerToActivate);
 
             timer->SetFocusTimer(targetTimerToFocus);
@@ -347,7 +351,7 @@ std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(co
 
 std::string Lufia2GameSetup::Name() const
 {
-    return "Lufia 2";
+    return "Lufia 2 - Ancient Cave";
 }
 
 std::shared_ptr<GameWatcher> Lufia2GameSetup::CreateGameSpecificWatcher()
