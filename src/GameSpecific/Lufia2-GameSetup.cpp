@@ -109,8 +109,17 @@ namespace
             SetFlagState("OnNameSelect", ram.ReadInteger<uint8_t>(0x0009) == 49 && ram.ReadInteger<uint8_t>(0x000A) == 126 && ram.ReadInteger<uint32_t>(0x0011) == 0 && !inGruberix && !onTitleMenu);
             SetFlagState("ScreenFading", !(ram.ReadInteger<uint8_t>(0x0583) == 15 || (ram.ReadInteger<uint8_t>(0x0583) == 128 && ram.ReadInteger<uint8_t>(0x0581) != 0)));
 
-            int bestFloor = ram.ReadInteger<uint8_t>(0x0B75); //NOTE: This is the "best floor" from the scoreboard data, not the actual current floor!
-            SetIntegerState("BestFloor", bestFloor);
+            //int blueChestScoreboard = ram.ReadInteger<uint16_t>(0x0B6E); // may use these later...
+            //SetIntegerState("BlueChestScoreboard", blueChestScoreboard);
+            //int redChestScoreboard = ram.ReadInteger<uint16_t>(0x0B70);
+            //SetIntegerState("RedChestScoreboard", redChestScoreboard);
+
+            int jellyKillScoreboard = ram.ReadInteger<uint8_t>(0x0B74);
+            SetIntegerState("JellyKillScoreboard", jellyKillScoreboard); // not currently using this for logic because there's a slight delay after the killing blow before it increments
+
+            int bestFloorScoreboard = ram.ReadInteger<uint8_t>(0x0B75);
+            SetIntegerState("BestFloorScoreboard", bestFloorScoreboard);
+
             int floor = ram.ReadInteger<uint8_t>(0x1E696);
             if (floor > 1) // changes to 0 between floors
                 SetIntegerState("Floor", floor - 1);
