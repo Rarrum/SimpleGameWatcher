@@ -21,12 +21,13 @@ namespace
 
         bool ShouldTriggerStart()
         {
-            return !hasFinishedJelly && ((GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik"));
+            return ((GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik"));
         }
 
         bool ShouldTriggerStop()
         {
-            return GetIntegerValue("Floor") == 99 && GetIntegerValue("BlobHP") == 0 && GetFlagValue("BlobDeathAnimation");
+            int jellyKillCount = GetIntegerValue("JellyKillCount");
+            return jellyKillCount == (IsTwoJellyMode ? 2 : 1);
         }
 
         bool ShouldTriggerReset()
@@ -34,10 +35,12 @@ namespace
             return GetIntegerValue("Floor") != 99 && (GetFlagValue("OnTitleMenu") || (GetFlagValue("OnNameSelect") && !GetFlagValue("ScreenFading")));
         }
 
-        bool CheckForFloorChanges()
+        bool ShouldProcessFloorChanges()
         {
-            return !hasFinishedJelly;
+            return !hasFinishedRun;
         }
+
+        bool IsTwoJellyMode = false;
 
     protected:
         void PollGameState() override
@@ -94,7 +97,7 @@ namespace
             lastWarningForUser.clear();
 
             // grab data from ram and store it for later use
-            int floor = ram.ReadInteger<uint8_t>(0x0B75);
+            int floor = ram.ReadInteger<uint8_t>(0x0B75); //NOTE: This is the "best floor" from the scoreboard data, not the actual current floor!
             SetIntegerState("Floor", floor);
 
             bool onTitleMenu = ram.ReadInteger<uint8_t>(0x0009) == 184 && ram.ReadInteger<uint8_t>(0x000A) == 161;
@@ -114,24 +117,40 @@ namespace
             uint8_t blobAnimationState = ram.ReadInteger<uint8_t>(0x421d); // also has other values outside of the blob fight sometimes
             SetFlagState("BlobDeathAnimation", blobAnimationState == 31);
 
+            if (floor == 99)
+            {
+                bool jellyDeath = GetIntegerValue("BlobHP") == 0 && GetFlagValue("BlobDeathAnimation");
+                if (GetFlagValue("AllowJellyKillCountChange") && jellyDeath)
+                {
+                    SetIntegerState("JellyKillCount", GetIntegerValue("JellyKillCount") + 1);
+                    SetFlagState("AllowJellyKillCountChange", false);
+                }
+            }
+            else
+            {
+                SetFlagState("AllowJellyKillCountChange", true);
+            }
+
             uint64_t inGameHours = ram.ReadInteger<uint8_t>(0x0b4d);
             uint64_t inGameMinutes = ram.ReadInteger<uint8_t>(0x0b4e);
             uint64_t inGameSeconds = ram.ReadInteger<uint8_t>(0x0b4f);
             uint64_t inGameSubsecondFrames = ram.ReadInteger<uint8_t>(0x0b50);
 
-            // a small amount of state management
             if (ShouldTriggerReset())
-                hasFinishedJelly = false;
+            {
+                hasFinishedRun = false;
+                SetIntegerState("JellyKillCount", 0);
+            }
             else if (ShouldTriggerStop())
-                hasFinishedJelly = true;
+                hasFinishedRun = true;
 
-            if (ShouldTriggerStart() || CheckForFloorChanges())
+            if (ShouldTriggerStart() || ShouldProcessFloorChanges())
             {
                 if (inGameSubsecondFrames > 50)
                     is60Fps = true;
             }
 
-            if (!ShouldTriggerStop() && !hasFinishedJelly)
+            if (!hasFinishedRun)
             {
                 // the first second of the game time may briefly display wrong on 60fps versions, until we've detected whether we run at 60fps or 50fps; does not affect the actual total time accumulated.
                 uint64_t totalMilliseconds = (inGameHours * 60 * 60 + inGameMinutes * 60 + inGameSeconds) * 1000 + 1000 * inGameSubsecondFrames / (is60Fps ? 60 : 50);
@@ -142,7 +161,7 @@ namespace
     private:
         SnesMemory snes;
 
-        bool hasFinishedJelly = false;
+        bool hasFinishedRun = false;
         bool is60Fps = false; // some versions run at 50fps
     };
 }
@@ -219,7 +238,9 @@ Lufia2GameSetup::Lufia2GameSetup()
 
     AddGameBoolOption("Require Two Jelly Kills", [this](bool enabled)
     {
-        
+        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
+        if (watcher) // make not be watching yet!
+            watcher->IsTwoJellyMode = enabled;
     }, false);
 }
 
@@ -242,8 +263,11 @@ std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(co
         else if (watcher->ShouldTriggerStop())
             timer->StopAllTimers();
         else if (watcher->ShouldTriggerReset())
+        {
             timer->ResetAllTimers();
-        else if (watcher->CheckForFloorChanges())
+            timer->SetNameDisplayPrefix("", "");
+        }
+        else if (watcher->ShouldProcessFloorChanges())
         {
             int currentFloor = watcher->GetIntegerValue("Floor");
 
@@ -269,6 +293,9 @@ std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(co
                 timer->SetActiveTimer(targetTimerToActivate);
 
             timer->SetFocusTimer(targetTimerToFocus);
+
+            if (!targetTimerToFocus.empty())
+                timer->SetNameDisplayPrefix(targetTimerToFocus, watcher->IsTwoJellyMode ? std::string("(") + std::to_string(watcher->GetIntegerValue("JellyKillCount") + 1) + ") " : "");
         }
     };
 

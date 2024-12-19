@@ -213,11 +213,11 @@ void NestedTimerWindow::SetNameDisplayPrefix(const std::string &name, const std:
 {
     for (NestedTimer &nested : nestedTimers)
     {
-        if (nested.Name == name)
+        if (name.empty() || nested.Name == name)
         {
             nested.DisplayPrefix = prefix;
             nested.Label->setText(QString::fromStdString(nested.DisplayPrefix + nested.Name));
-            break;
+            return;
         }
     }
 }
