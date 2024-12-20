@@ -19,3 +19,4 @@ The current build only supports Lufia 2's Ancient Cave (Gift Mode), run in vario
 - On linux, Qt5 libraries need to be installed on the system before the released build will run.
 - High CPU usage and UI lag if an emulator is running and we're actively searching for a game whose memory patterns have not been found yet in the emulator.
 - Save/Restore layout currently only suports game-auto-controlled windows (manual controls aren't hooked up to it yet).
+- Lufia 2 RAM pattern detection on the title screen doesn't currently work right unless gift mode is unlocked.

@@ -27,6 +27,8 @@ public:
     void SetCounter(const std::string &name, int64_t value);
     void ResetAllCounters();
 
+    std::function<void()> OnRefresh;
+
     std::unordered_map<std::string, std::string> SaveLayout() const override;
     void RestoreLayout(const std::unordered_map<std::string, std::string> &layoutData) override;
 

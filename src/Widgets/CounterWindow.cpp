@@ -38,7 +38,7 @@ CounterWindow::CounterWindow(bool createDefaultCounterWithControls)
     mainLayout->addWidget(nestedCountersLayoutHolder);
     setLayout(mainLayout);
 
-    resize(200, 50);
+    resize(200, 35);
 
     if (createDefaultCounterWithControls)
     {
@@ -87,6 +87,9 @@ CounterWindow::CounterWindow(bool createDefaultCounterWithControls)
 
 void CounterWindow::RefreshState()
 {
+    if (OnRefresh)
+        OnRefresh();
+
     for (NestedCounter &nested : nestedCounters)
     {
         std::string displayValue = std::to_string(nested.Value);
@@ -101,7 +104,7 @@ void CounterWindow::RefreshState()
 
 void CounterWindow::AddCounter(const std::string &name)
 {
-    resize(width(), height() + 40);
+    resize(width(), height() + 35);
 
     int row = (int)nestedCounters.size();
 
