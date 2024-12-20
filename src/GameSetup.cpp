@@ -105,6 +105,7 @@ std::string GameSetup::SaveLayout() const
         optionData.emplace(option.Name, option.Enabled);
 
     nlohmann::json jsonData;
+    jsonData["game"] = Name();
     jsonData["windows"] = windowData;
     jsonData["options"] = optionData;
     return jsonData.dump(4);
@@ -114,15 +115,22 @@ void GameSetup::RestoreLayout(const std::string &layoutData)
 {
     allNormalWindows.clear();
 
+    std::string allErrors;
     nlohmann::json jsonData = nlohmann::json::parse(layoutData);
 
-    std::string allErrors;
+    std::string jsonGameName = jsonData["game"];
+    if (jsonGameName != Name())
+    {
+        allErrors += "Layout file was a different game (" + jsonGameName + "), may not load correctly.";
+    }
+
     for (const auto &jsonWindow : jsonData["windows"].items())
     {
         auto modeIter = std::find_if(allModes.begin(), allModes.end(), [&](const auto &mode) { return jsonWindow.key() == mode.Name; });
         if (modeIter == allModes.end())
         {
             allErrors += std::string("Layout data has unknown game mode: ") + jsonWindow.key() + "\n";
+            continue;
         }
 
         UpdatableGameWindow* gameWindow = modeIter->Creator();
