@@ -10,11 +10,12 @@ NOTE: This project is still in its extremely early stages of development.  Not m
 - Click any of the buttons to create timer windows for that game.  The timer should automatically start and progress in reaction to the game state changing.
 - You can right click any of the timer windows to change their colors, and drag their borders to resize them.
 
-# Contrbibuting additional game-specific controls
-TODO (The initial build only supports Lufia 2's Ancient Cave, run in various snes emulators)
+# Game Support
+The current build only supports Lufia 2's Ancient Cave (Gift Mode), run in various snes emulators.  The code and UI is laid it to support multiple games in the future.
 
 # Known issues
 - Memory scanning sometimes runs into false positives (using an emulator's cheat memory search or save states might trigger this).  If you run into this, try restarting the emulator.
 - On linux, scanning doesn't work until the user runs "sudo setcap cap_sys_ptrace=eip EasyAutoTracker" on the executable - need to automate setting this somehow.
 - On linux, Qt5 libraries need to be installed on the system before the released build will run.
 - High CPU usage and UI lag if an emulator is running and we're actively searching for a game whose memory patterns have not been found yet in the emulator.
+- Save/Restore layout currently only suports game-auto-controlled windows (manual controls aren't hooked up to it yet).
