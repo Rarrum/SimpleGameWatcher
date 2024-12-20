@@ -20,6 +20,7 @@
 
 #include "Widgets/ClosableQWidget.h"
 #include "Widgets/SimpleTimerWindow.h"
+#include "Widgets/CounterWindow.h"
 
 #include "GameList.h"
 
@@ -59,6 +60,7 @@ int main(int argc, char **argv)
 {
     std::vector<std::unique_ptr<GameSetup>> allGames = CreateGameList();
     std::vector<std::unique_ptr<SimpleTimerWindow>> manualTimers;
+    std::vector<std::unique_ptr<CounterWindow>> manualCounters;
 
     GameSetup *activeGame = nullptr;
     std::function<void()> onEnableGameAuto;
@@ -82,6 +84,14 @@ int main(int argc, char **argv)
         manualTimers.emplace_back(std::make_unique<SimpleTimerWindow>(true));
     });
     manualLayout->addWidget(createManualTimerButton);
+
+    QPushButton *createManualCounterButton = new QPushButton(&window);
+    createManualCounterButton->setText("Simple Counter");
+    QObject::connect(createManualCounterButton, &QPushButton::clicked, [&]()
+    {
+        manualCounters.emplace_back(std::make_unique<CounterWindow>(true));
+    });
+    manualLayout->addWidget(createManualCounterButton);
 
     // auto section
     QGroupBox *autoBox = new QGroupBox("Create Game Auto Controlled");
@@ -353,7 +363,7 @@ int main(int argc, char **argv)
     leftCreationOptionsHolder->setLayout(leftCreationOptionsLayout);
 
     // layouts layout
-    QGroupBox *loadSaveLayoutsBox = new QGroupBox("Window Layouts");
+    QGroupBox *loadSaveLayoutsBox = new QGroupBox("Window Layouts (Auto Only)");
     QHBoxLayout *loadSaveLayoutsLayout = new QHBoxLayout();
 
     loadSaveLayoutsLayout->addWidget(saveLayoutButton);
@@ -379,6 +389,7 @@ int main(int argc, char **argv)
     {
         allGames.clear();
         manualTimers.clear();
+        manualCounters.clear();
     };
 
     return app.exec();

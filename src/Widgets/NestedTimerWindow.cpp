@@ -4,8 +4,6 @@
 #include <QVBoxLayout>
 #include <QLabel>
 
-#include "ScaleableLabel.h"
-
 namespace
 {
     //TODO: switch back to std::format after clang/etc support it in LTS releases

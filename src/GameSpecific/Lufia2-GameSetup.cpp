@@ -6,6 +6,7 @@
 #include "../GameWatcher.h"
 #include "../Widgets/SimpleTimerWindow.h"
 #include "../Widgets/NestedTimerWindow.h"
+#include "../Widgets/CounterWindow.h"
 #include "../MemoryWatchers/SnesMemory.h"
 #include "../MemoryWatchers/MemoryPatternMatchUtils.h"
 
@@ -41,6 +42,9 @@ namespace
         }
 
         bool IsTwoJellyMode = false;
+
+        int64_t RedChestCount = 0;
+        int64_t BlueChestCount = 0;
 
     protected:
         void PollGameState() override
@@ -109,10 +113,25 @@ namespace
             SetFlagState("OnNameSelect", ram.ReadInteger<uint8_t>(0x0009) == 49 && ram.ReadInteger<uint8_t>(0x000A) == 126 && ram.ReadInteger<uint32_t>(0x0011) == 0 && !inGruberix && !onTitleMenu);
             SetFlagState("ScreenFading", !(ram.ReadInteger<uint8_t>(0x0583) == 15 || (ram.ReadInteger<uint8_t>(0x0583) == 128 && ram.ReadInteger<uint8_t>(0x0581) != 0)));
 
-            //int blueChestScoreboard = ram.ReadInteger<uint16_t>(0x0B6E); // may use these later...
-            //SetIntegerState("BlueChestScoreboard", blueChestScoreboard);
-            //int redChestScoreboard = ram.ReadInteger<uint16_t>(0x0B70);
-            //SetIntegerState("RedChestScoreboard", redChestScoreboard);
+            int blueChestScoreboard = ram.ReadInteger<uint16_t>(0x0B6E);
+            SetIntegerState("BlueChestScoreboard", blueChestScoreboard);
+            if (blueChestScoreboard != lastScoreboardBlueChests)
+            {
+                if (lastScoreboardBlueChests != -1 && blueChestScoreboard > lastScoreboardBlueChests)
+                    BlueChestCount += blueChestScoreboard - lastScoreboardBlueChests;
+
+                lastScoreboardBlueChests = blueChestScoreboard;
+            }
+
+            int redChestScoreboard = ram.ReadInteger<uint16_t>(0x0B70);
+            SetIntegerState("RedChestScoreboard", redChestScoreboard);
+            if (redChestScoreboard != lastScoreboardRedChests)
+            {
+                if (lastScoreboardRedChests != -1 && redChestScoreboard > lastScoreboardRedChests)
+                    RedChestCount += redChestScoreboard - lastScoreboardRedChests;
+
+                lastScoreboardRedChests = redChestScoreboard;
+            }
 
             //int jellyKillScoreboard = ram.ReadInteger<uint8_t>(0x0B74); // not currently using this for logic because there's a slight delay after the killing blow before it increments
             //SetIntegerState("JellyKillScoreboard", jellyKillScoreboard);
@@ -180,6 +199,11 @@ namespace
             {
                 hasFinishedRun = false;
                 SetIntegerState("JellyKillCount", 0);
+
+                RedChestCount = 0;
+                BlueChestCount = 0;
+                lastScoreboardRedChests = -1;
+                lastScoreboardBlueChests = -1;
             }
             else if (ShouldTriggerStop())
                 hasFinishedRun = true;
@@ -202,13 +226,17 @@ namespace
         SnesMemory snes;
 
         bool hasFinishedRun = false;
+
+        int lastScoreboardRedChests = -1;
+        int lastScoreboardBlueChests = -1;
+
         bool is60Fps = false; // some versions run at 50fps
     };
 }
 
 Lufia2GameSetup::Lufia2GameSetup()
 {
-    AddGameMode("Ancient Cave - Every 10 Floors", [this]()
+    AddGameMode("Every 10 Floors Timer", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries;
         for (int i = 10; i < 100; i += 10)
@@ -219,7 +247,7 @@ Lufia2GameSetup::Lufia2GameSetup()
         return CreateTimerForFloorSets(allEntries);
     });
 
-    AddGameMode("Ancient Cave - Cores and Archfiends", [this]()
+    AddGameMode("Cores and Archfiends Timer", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries =
         {
@@ -234,7 +262,7 @@ Lufia2GameSetup::Lufia2GameSetup()
         return CreateTimerForFloorSets(allEntries);
     });
 
-    AddGameMode("Ancient Cave - Many Notable Enemies", [this]()
+    AddGameMode("Many Notable Enemies Timer", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries =
         {
@@ -254,7 +282,7 @@ Lufia2GameSetup::Lufia2GameSetup()
         return CreateTimerForFloorSets(allEntries);
     });
 
-    AddGameMode("Ancient Cave - Simple Real Time", [this]()
+    AddGameMode("Simple Real Time", [this]()
     {
         std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
         std::unique_ptr<SimpleTimerWindow> timer = std::make_unique<SimpleTimerWindow>();
@@ -265,7 +293,7 @@ Lufia2GameSetup::Lufia2GameSetup()
         return timer;
     });
 
-    AddGameMode("Ancient Cave - Simple Game Time", [this]()
+    AddGameMode("Simple Game Time", [this]()
     {
         std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
         std::unique_ptr<SimpleTimerWindow> timerToReturn = std::make_unique<SimpleTimerWindow>();
@@ -276,6 +304,22 @@ Lufia2GameSetup::Lufia2GameSetup()
         };
 
         return timerToReturn;
+    });
+
+    AddGameMode("Opened Chests Counter", [this]()
+    {
+        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
+        std::unique_ptr<CounterWindow> counterToReturn = std::make_unique<CounterWindow>();
+        CounterWindow *counter = counterToReturn.get();
+        counter->AddCounter("Red Chests");
+        counter->AddCounter("Blue Chests");
+        counter->OnRefresh = [=]()
+        {
+            counter->SetCounter("Red Chests", watcher->RedChestCount);
+            counter->SetCounter("Blue Chests", watcher->BlueChestCount);
+        };
+
+        return counterToReturn;
     });
 
     AddGameBoolOption("Require Two Jelly Kills", [this](bool enabled)
