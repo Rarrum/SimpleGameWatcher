@@ -21,23 +21,26 @@ namespace
 
         bool ShouldTriggerStart()
         {
-            return !hasFinishedJelly && ((GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik"));
+            return ((GetFlagValue("OnNameSelect") && GetFlagValue("ScreenFading")) || GetFlagValue("InGruberik")) && !hasFinishedRun;
         }
 
         bool ShouldTriggerStop()
         {
-            return GetIntegerValue("Floor") == 99 && GetIntegerValue("BlobHP") == 0 && GetFlagValue("BlobDeathAnimation");
+            int jellyKillCount = GetIntegerValue("JellyKillCount");
+            return jellyKillCount == (IsTwoJellyMode ? 2 : 1);
         }
 
         bool ShouldTriggerReset()
         {
-            return GetIntegerValue("Floor") != 99 && (GetFlagValue("OnTitleMenu") || (GetFlagValue("OnNameSelect") && !GetFlagValue("ScreenFading")));
+            return !GetFlagValue("OnJellyFloor") && (GetFlagValue("OnTitleMenu") || (GetFlagValue("OnNameSelect") && !GetFlagValue("ScreenFading")));
         }
 
-        bool CheckForFloorChanges()
+        bool ShouldProcessFloorChanges()
         {
-            return !hasFinishedJelly;
+            return !hasFinishedRun && GetFlagValue("InCave");
         }
+
+        bool IsTwoJellyMode = false;
 
     protected:
         void PollGameState() override
@@ -94,9 +97,6 @@ namespace
             lastWarningForUser.clear();
 
             // grab data from ram and store it for later use
-            int floor = ram.ReadInteger<uint8_t>(0x0B75);
-            SetIntegerState("Floor", floor);
-
             bool onTitleMenu = ram.ReadInteger<uint8_t>(0x0009) == 184 && ram.ReadInteger<uint8_t>(0x000A) == 161;
             SetFlagState("OnTitleMenu", onTitleMenu);
 
@@ -109,30 +109,88 @@ namespace
             SetFlagState("OnNameSelect", ram.ReadInteger<uint8_t>(0x0009) == 49 && ram.ReadInteger<uint8_t>(0x000A) == 126 && ram.ReadInteger<uint32_t>(0x0011) == 0 && !inGruberix && !onTitleMenu);
             SetFlagState("ScreenFading", !(ram.ReadInteger<uint8_t>(0x0583) == 15 || (ram.ReadInteger<uint8_t>(0x0583) == 128 && ram.ReadInteger<uint8_t>(0x0581) != 0)));
 
+            //int blueChestScoreboard = ram.ReadInteger<uint16_t>(0x0B6E); // may use these later...
+            //SetIntegerState("BlueChestScoreboard", blueChestScoreboard);
+            //int redChestScoreboard = ram.ReadInteger<uint16_t>(0x0B70);
+            //SetIntegerState("RedChestScoreboard", redChestScoreboard);
+
+            //int jellyKillScoreboard = ram.ReadInteger<uint8_t>(0x0B74); // not currently using this for logic because there's a slight delay after the killing blow before it increments
+            //SetIntegerState("JellyKillScoreboard", jellyKillScoreboard);
+
+            //int bestFloorScoreboard = ram.ReadInteger<uint8_t>(0x0B75); // may use this later...
+            //SetIntegerState("BestFloorScoreboard", bestFloorScoreboard);
+
+            int floor = ram.ReadInteger<uint8_t>(0x1E696);
+            if (floor > 1) // changes to 0 between floors
+                SetIntegerState("Floor", floor - 1);
+
+            bool onOverworld = (locationIdA == 15163 && locationIdB == 15419 && locationIdC == 15164) || // transition
+                               (locationIdA == 43176 && locationIdB == 43176 && locationIdC == 43176); // actually there
+            SetFlagState("OnOverworld", onOverworld);
+
+            bool inCaveEntrance = locationIdA == 3386 && locationIdB == 3387 && locationIdC == 3388 && !inGruberix;
+            SetFlagState("InCaveEntrance", inCaveEntrance);
+
+            bool inCave = locationIdA == 12288 && locationIdB == 12288 && locationIdC == 12288; //NOTE: This changes to 0 between floors, so account for previous state
+            inCave |= (locationIdA == 0 && locationIdB == 0 && locationIdC == 0) || GetFlagValue("InCave");
+            inCave &= !onTitleMenu && !inGruberix && !onOverworld && !inCaveEntrance;
+            SetFlagState("InCave", inCave);
+
+            bool onJellyFloor = (locationIdA == 0 && locationIdB == 0 && locationIdC == 0 && floor == 99 && !GetFlagValue("ScreenFading")) || GetFlagValue("OnJellyFloor"); //floor memory value is 99 for both B98 and B99
+            SetFlagState("OnJellyFloor", onJellyFloor);
+
+            if (!inCave || inCaveEntrance)
+            {
+                SetIntegerState("Floor", 0);
+                SetFlagState("OnJellyFloor", false);
+            }
+            else if (onJellyFloor)
+                SetIntegerState("Floor", 99);
+
             uint16_t blobHpAfterCurrentAttack = ram.ReadInteger<uint16_t>(0x162C);
             SetIntegerState("BlobHP", blobHpAfterCurrentAttack);
             uint8_t blobAnimationState = ram.ReadInteger<uint8_t>(0x421d); // also has other values outside of the blob fight sometimes
-            SetIntegerState("BlobAnimationState", blobAnimationState);
-            SetFlagState("BlobDeathAnimation", blobAnimationState == 31);
+            bool isBlobDeadAnimation = blobAnimationState == 31;
+
+            if (onJellyFloor)
+            {
+                bool jellyDeath = GetIntegerValue("BlobHP") == 0 && isBlobDeadAnimation;
+                if (GetFlagValue("AllowJellyKillCountChange") && jellyDeath)
+                {
+                    SetIntegerState("JellyKillCount", GetIntegerValue("JellyKillCount") + 1);
+                    SetFlagState("AllowJellyKillCountChange", false);
+                    SetFlagState("JellyOnCurrentFloorIsDead", true);
+                }
+            }
+            else
+            {
+                SetFlagState("AllowJellyKillCountChange", true);
+                SetFlagState("JellyOnCurrentFloorIsDead", false);
+            }
+
+            if (inCaveEntrance || GetIntegerValue("CaveRunNumber") == 0)
+                SetIntegerState("CaveRunNumber", GetIntegerValue("JellyKillCount") + 1);
 
             uint64_t inGameHours = ram.ReadInteger<uint8_t>(0x0b4d);
             uint64_t inGameMinutes = ram.ReadInteger<uint8_t>(0x0b4e);
             uint64_t inGameSeconds = ram.ReadInteger<uint8_t>(0x0b4f);
             uint64_t inGameSubsecondFrames = ram.ReadInteger<uint8_t>(0x0b50);
 
-            // a small amount of state management
             if (ShouldTriggerReset())
-                hasFinishedJelly = false;
+            {
+                hasFinishedRun = false;
+                SetIntegerState("JellyKillCount", 0);
+            }
             else if (ShouldTriggerStop())
-                hasFinishedJelly = true;
+                hasFinishedRun = true;
 
-            if (ShouldTriggerStart() || CheckForFloorChanges())
+            if (ShouldTriggerStart() || ShouldProcessFloorChanges())
             {
                 if (inGameSubsecondFrames > 50)
                     is60Fps = true;
             }
 
-            if (!ShouldTriggerStop() && !hasFinishedJelly)
+            if (!hasFinishedRun)
             {
                 // the first second of the game time may briefly display wrong on 60fps versions, until we've detected whether we run at 60fps or 50fps; does not affect the actual total time accumulated.
                 uint64_t totalMilliseconds = (inGameHours * 60 * 60 + inGameMinutes * 60 + inGameSeconds) * 1000 + 1000 * inGameSubsecondFrames / (is60Fps ? 60 : 50);
@@ -143,7 +201,7 @@ namespace
     private:
         SnesMemory snes;
 
-        bool hasFinishedJelly = false;
+        bool hasFinishedRun = false;
         bool is60Fps = false; // some versions run at 50fps
     };
 }
@@ -154,7 +212,9 @@ Lufia2GameSetup::Lufia2GameSetup()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries;
         for (int i = 10; i < 100; i += 10)
-            allEntries.emplace_back(std::tuple{i - 9, i, "Floor " + std::to_string(i)});
+            allEntries.emplace_back(std::tuple{i - 9, i, "Floors " + std::to_string(i - 9) + "-" + std::to_string(i)});
+
+        allEntries.emplace_back(std::tuple{99, 99, "Jelly Kill"});
 
         return CreateTimerForFloorSets(allEntries);
     });
@@ -217,6 +277,13 @@ Lufia2GameSetup::Lufia2GameSetup()
 
         return timerToReturn;
     });
+
+    AddGameBoolOption("Require Two Jelly Kills", [this](bool enabled)
+    {
+        std::shared_ptr<Lufia2GameWatcher> watcher = std::dynamic_pointer_cast<Lufia2GameWatcher>(Watcher());
+        if (watcher) // make not be watching yet!
+            watcher->IsTwoJellyMode = enabled;
+    }, false);
 }
 
 std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(const std::vector<std::tuple<int, int, std::string>> &floorSets)
@@ -238,8 +305,11 @@ std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(co
         else if (watcher->ShouldTriggerStop())
             timer->StopAllTimers();
         else if (watcher->ShouldTriggerReset())
+        {
             timer->ResetAllTimers();
-        else if (watcher->CheckForFloorChanges())
+            timer->SetNameDisplayPrefix("", "");
+        }
+        else if (watcher->ShouldProcessFloorChanges())
         {
             int currentFloor = watcher->GetIntegerValue("Floor");
 
@@ -261,10 +331,18 @@ std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(co
                     targetTimerToFocus = floorName;
             }
 
-            if (!targetTimerToActivate.empty())
+            if (watcher->GetFlagValue("JellyOnCurrentFloorIsDead")) // so the subtimer stops in two-jelly mode on kill
+                timer->SetActiveTimer("");
+            else if (!targetTimerToActivate.empty())
                 timer->SetActiveTimer(targetTimerToActivate);
 
             timer->SetFocusTimer(targetTimerToFocus);
+
+            std::string labelPrefix = watcher->IsTwoJellyMode ? std::string("(") + std::to_string(watcher->GetIntegerValue("CaveRunNumber")) + ") " : "";
+            if (!targetTimerToFocus.empty())
+                timer->SetNameDisplayPrefix(targetTimerToFocus, labelPrefix);
+            if (!targetTimerToActivate.empty())
+                timer->SetNameDisplayPrefix(targetTimerToActivate, labelPrefix);
         }
     };
 
@@ -273,7 +351,7 @@ std::unique_ptr<UpdatableGameWindow> Lufia2GameSetup::CreateTimerForFloorSets(co
 
 std::string Lufia2GameSetup::Name() const
 {
-    return "Lufia 2";
+    return "Lufia 2 - Ancient Cave";
 }
 
 std::shared_ptr<GameWatcher> Lufia2GameSetup::CreateGameSpecificWatcher()

@@ -24,6 +24,7 @@ public:
     void AddNestedTimer(const std::string &name);
     void SetActiveTimer(const std::string &name);
     void SetFocusTimer(const std::string &name);
+    void SetNameDisplayPrefix(const std::string &name, const std::string &prefix); // special behaviour: empty name implies all timers
     void StopAllTimers();
     void ResetAllTimers();
 
@@ -51,6 +52,7 @@ private slots:
     struct NestedTimer
     {
         std::string Name;
+        std::string DisplayPrefix;
         bool Activated = false;
         bool Focused = false;
         bool Touched = false;

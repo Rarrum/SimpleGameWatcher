@@ -7,7 +7,6 @@
 namespace
 {
     const uint32_t SnesRamSize = 128 * 1024;
-    const uint32_t SnesRomSize = 6 * 1024 * 1024;
 }
 
 struct SnesMemoryInternal
@@ -33,7 +32,11 @@ bool SnesMemory::TryLocateRam(std::function<uint64_t(uint8_t *start, uint8_t *en
 
         data->snesProcess = PCProcessMemory::FindProcess([](const std::string &processNameLower)
         {
-            return processNameLower.find("snes") != std::string::npos || processNameLower.find("higan") != std::string::npos || processNameLower.find("ares") != std::string::npos;
+            return processNameLower.find("snes") != std::string::npos ||
+                   processNameLower == "higan" ||
+                   processNameLower == "ares" ||
+                   processNameLower == "emuhawk" ||
+                   processNameLower == "retroarch";
         }, [&](const PCProcessMemory &process)
         {
             process.ScanMemory([&](uint8_t *start, uint8_t *end, uint64_t startAddress)
