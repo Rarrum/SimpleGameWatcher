@@ -236,7 +236,7 @@ namespace
 
 Lufia2GameSetup::Lufia2GameSetup()
 {
-    AddGameMode("Every 10 Floors", [this]()
+    AddGameMode("Every 10 Floors Timer", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries;
         for (int i = 10; i < 100; i += 10)
@@ -247,7 +247,7 @@ Lufia2GameSetup::Lufia2GameSetup()
         return CreateTimerForFloorSets(allEntries);
     });
 
-    AddGameMode("Cores and Archfiends", [this]()
+    AddGameMode("Cores and Archfiends Timer", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries =
         {
@@ -262,7 +262,7 @@ Lufia2GameSetup::Lufia2GameSetup()
         return CreateTimerForFloorSets(allEntries);
     });
 
-    AddGameMode("Many Notable Enemies", [this]()
+    AddGameMode("Many Notable Enemies Timer", [this]()
     {
         std::vector<std::tuple<int, int, std::string>> allEntries =
         {
